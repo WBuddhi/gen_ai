@@ -1,0 +1,19 @@
+# Data
+dataset_name: "tomasg25/scientific_lay_summarisation"
+task: "elife"
+
+# Database Configuration
+catalog_name: "llama2-summarisation-slr"
+schemas:
+  landing:
+    schema_name: "landing"
+    use_volumes: True
+  bronze:
+    schema_name: "bronze"
+    use_volume: False
+  silver:
+    schema_name: "bronze"
+    use_volume: False
+  gold:
+    schema_name: "gold"
+    use_volume: False

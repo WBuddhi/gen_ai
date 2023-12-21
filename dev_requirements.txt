@@ -1,0 +1,2 @@
+databricks-connect==14.2.0
+pyspark==3.5.0

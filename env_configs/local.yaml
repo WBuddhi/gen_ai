@@ -1,0 +1,3 @@
+databricks-connect:
+  profile: "databricks-personal-dev"
+  cluster_id: "1220-131252-6c8tpr9e"

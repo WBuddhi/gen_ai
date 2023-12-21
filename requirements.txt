@@ -1,0 +1,9 @@
+torch==2.1.2
+accelerate==0.25.0
+peft==0.7.1
+bitsandbytes==0.41.3.post2
+transformers==4.36.2
+trl==0.7.4
+datasets==2.15.0
+PyYAML==6.0.1
+databricks-sdk==0.16.0
