@@ -18,6 +18,7 @@ some_input = sys.argv[4]
 ENV = env
 DB_RUN_ID = run_id
 DB_JOB_ID = job_id
+print(env, job_id, run_id)
 LOG_VARS = {"env": ENV, "db_run_id": DB_RUN_ID, "db_job_id": DB_JOB_ID}
 LOGGER_PATH_FROM_ROOT = "src/config/logging.yaml"
 
