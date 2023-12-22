@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from databricks.sdk import WorkspaceClient
-from typing import Tuple, Union, Dict
+from typing import Tuple, Dict
 import os
 
 

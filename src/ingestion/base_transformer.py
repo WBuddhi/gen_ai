@@ -13,17 +13,20 @@ class BaseTransformer(metaclass=ABCMeta):
     def __init__(
         self,
         task_name: str,
-        overwrite_table=False,
+        catalog_name: str,
+        schema_name: str,
+        mode: str,
         destination_file_format: str = "DELTA",
         spark: Optional[SparkSession] = None,
         db_client: Optional[WorkspaceClient] = None,
+        **kwargs,
     ) -> None:
         self.destination_file_format = destination_file_format
+        self.catalog_name = catalog_name
+        self.schema_name = schema_name
         self.task_name = task_name
-        self.spark, self.db_client = get_spark_session_db_client(
-            self.task_name
-        )
-        self.overwrite_table = overwrite_table
+        self.spark = get_spark_session_db_client(self.task_name)
+        self.mode = mode
         self.cached_tables = []
 
     @abstractmethod
@@ -68,15 +71,15 @@ class BaseTransformer(metaclass=ABCMeta):
             try:
                 save(
                     spark=self.spark,
-                    db_client=self.db_client,
                     df=df["df"],
-                    catalog_name=self.catalog_name,
-                    schema_name=self.schema_name,
+                    destination_path=self.destination_path,
+                    database_name=self.dst_database,
                     table_name=table_name,
                     file_format=self.destination_file_format,
-                    overwrite=self.overwrite_table,
+                    mode=self.mode,
                     partition_by=partition_by,
                     optimize_table=optimize_table,
+                    upsert_config=df.get("upsert_config"),
                 )
             except Exception as error:
                 logger.exception("Failed to save tables")

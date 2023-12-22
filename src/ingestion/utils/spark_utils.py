@@ -1,30 +1,14 @@
-import os
 from datetime import datetime
-from typing import List, Union
+from typing import List, Union, Dict
 
 from delta import DeltaTable
 from pyspark.sql import DataFrame, SparkSession
 from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.catalog import VolumeType
 from pyspark.sql.functions import col, lit
 from pyspark.sql.types import TimestampType
 
 from src.config import logger
-
-
-def _create_db(spark: SparkSession, database_name: str, location: str) -> str:
-    try:
-        if not _db_exists(spark, database_name):
-            logger.info(f"Creating db {database_name} at {location}")
-            database_path = f"CREATE DATABASE `{database_name}` LOCATION '{location}{database_name}/_db/'"  # noqa
-            spark.sql(database_path)
-            logger.info(
-                f"Successfully created db {database_name} at {location}"
-            )
-        else:
-            logger.info(f"Database {database_name} exists")
-    except Exception as error:
-        logger.exception(f"Failed to create db at {location}{database_name}")
-        raise error
 
 
 def _create_schema(
@@ -40,23 +24,6 @@ def _create_schema(
         return db_client.schema.create(
             name=schema_name, catalog_name=catalog_name
         )
-
-
-def create_abfss_path(
-    container: str, storage_account: str = None, path: str = None
-) -> str:
-    # TODO: use urllib to join paths
-    storage_account = (
-        storage_account if storage_account else os.getenv("STORAGE_ACCOUNT")
-    )
-    abfss_path = f"abfss://{container}@{storage_account}.dfs.core.windows.net/"
-    if path:
-        if path[:1] == "/":
-            path = path[1:]
-        if path[-1:] == "/":
-            path = path[:-1]
-        abfss_path = f"{abfss_path}{path}/"
-    return abfss_path
 
 
 def save_new_table(
@@ -75,10 +42,6 @@ def save_new_table(
         mergeSchema=merge_schema,
     )
     logger.info(f"Table successfully saved: {table_full_name}")
-
-
-def _db_exists(spark: SparkSession, database: str) -> None:
-    return spark.catalog._jcatalog.databaseExists(database)
 
 
 def table_exists(db_client: WorkspaceClient, table_full_name: str):
@@ -127,6 +90,41 @@ def create_merge_condition(match_cols: List):
     return condition
 
 
+def upsert_to_table(
+    table_full_name: str, df: DataFrame, upsert_config: Dict[str, str]
+):
+    when_matched_update_cond = create_when_matched_update_condition(
+        df, upsert_config["exclusion_list"]
+    )
+    update_matched_col_set = create_update_dict(
+        df.columns, upsert_config["exclusion_list"]
+    )
+    update_not_matched_col_set = create_update_dict(df.columns)
+    logger.info(f"Upserting : {table_full_name}")
+    delta_table = DeltaTable.forName(spark, table_full_name)
+    delta_table.alias("tgt").merge(
+        df.alias("src"),
+        condition=create_merge_condition(upsert_config["on_match_cols"]),
+    ).whenMatchedUpdate(
+        condition=when_matched_update_cond,
+        set=update_matched_col_set,
+    ).whenNotMatchedInsert(
+        values=update_not_matched_col_set
+    ).execute()
+
+
+def create_volume(
+    db_client, catalog_name, schema_name, table_name, volume_type="MANAGED"
+):
+    try:
+        db_client.volumes.read(f"{catalog_name}.{schema_name}.{table_name}")
+        logger.info("Volume already exists")
+    except Exception:
+        return db_client.volumes.create(
+            catalog_name, schema_name, table_name, VolumeType(volume_type)
+        )
+
+
 def save(
     spark: SparkSession,
     db_client: WorkspaceClient,
@@ -147,29 +145,12 @@ def save(
     table_full_name = f"{catalog_name}.{schema_name}.{table_name}"
     _create_schema(db_client, catalog_name, schema_name)
     logger.info(f"Preparing to write {table_full_name}")
-
-    if mode == "upsert" and table_exists(db_client, table_full_name):
-        when_matched_update_cond = create_when_matched_update_condition(
-            df, upsert_config["exclusion_list"]
-        )
-        update_matched_col_set = create_update_dict(
-            df.columns, upsert_config["exclusion_list"]
-        )
-        update_not_matched_col_set = create_update_dict(df.columns)
-        logger.info(f"Upserting : {table_full_name}")
-        delta_table = DeltaTable.forName(spark, table_full_name)
-        delta_table.alias("tgt").merge(
-            df.alias("src"),
-            condition=create_merge_condition(upsert_config["on_match_cols"]),
-        ).whenMatchedUpdate(
-            condition=when_matched_update_cond,
-            set=update_matched_col_set,
-        ).whenNotMatchedInsert(
-            values=update_not_matched_col_set
-        ).execute()
+    if file_format == "VOLUME":
+        create_volume(db_client, catalog_name, schema_name, table_name)
+        pass
+    elif mode == "upsert" and table_exists(db_client, table_full_name):
+        upsert_to_table(table_full_name, df, upsert_config)
     else:
-        if mode == "upsert":
-            mode = "append"
         save_new_table(
             df,
             table_full_name,

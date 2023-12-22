@@ -3,17 +3,21 @@ dataset_name: "tomasg25/scientific_lay_summarisation"
 task: "elife"
 
 # Database Configuration
-catalog_name: "llama2-summarisation-slr"
-schemas:
-  landing:
-    schema_name: "landing"
-    use_volumes: True
-  bronze:
-    schema_name: "bronze"
-    use_volume: False
-  silver:
-    schema_name: "bronze"
-    use_volume: False
-  gold:
-    schema_name: "gold"
-    use_volume: False
+bronze:
+  task_name: "slr_to_bronze"
+  catalog_name: "llama2-summarisation-slr"
+  schema_name: "bronze"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+silver:
+  task_name: "slr_to_bronze"
+  catalog_name: "llama2-summarisation-slr"
+  schema_name: "silver"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+gold:
+  task_name: "slr_to_gold"
+  catalog_name: "llama2-summarisation-slr"
+  schema_name: "gold"
+  destination_file_format: "DELTA"
+  mode: "overwrite"

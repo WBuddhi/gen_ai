@@ -1,30 +1,30 @@
 from abc import ABCMeta, abstractmethod
-from typing import List, Optional
+from typing import List, Dict
 
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import DataFrame
 
-from src.ingestion.config import logger
-from src.ingestion.spark_config import get_spark_session
+from src.config import logger
+from src.ingestion.spark_config import get_spark_session_db_client
 from src.ingestion.utils.spark_utils import save
 
 
 class BaseTransformer(metaclass=ABCMeta):
     def __init__(
         self,
-        dbutils,
         task_name: str,
-        destination_path: str,
-        dst_database: str,
+        catalog_name: str,
+        schema_name: str,
         mode: str,
+        databricks_connect: Dict[str, str],
         destination_file_format: str = "DELTA",
-        spark: Optional[SparkSession] = None,
     ) -> None:
-        self.dbutils = dbutils
-        self.destination_path = destination_path
+        self.catalog_name = catalog_name
+        self.schema_name = schema_name
         self.destination_file_format = destination_file_format
-        self.dst_database = dst_database
         self.task_name = task_name
-        self.spark = get_spark_session(self.task_name) if not spark else spark
+        self.spark, self.db_client = get_spark_session_db_client(
+            self.task_name, databricks_connect
+        )
         self.mode = mode
         self.cached_tables = []
 
@@ -65,14 +65,13 @@ class BaseTransformer(metaclass=ABCMeta):
             logger.exception("Failed to apply transformation")
             raise error
 
-        for df in dfs:
-            table_name: str = df["table_name"]
+        for table_name, df in dfs.items():
             try:
                 save(
                     spark=self.spark,
-                    df=df["df"],
-                    destination_path=self.destination_path,
-                    database_name=self.dst_database,
+                    df=df,
+                    catalog_name=self.catalog_name,
+                    schema_name=self.schema_name,
                     table_name=table_name,
                     file_format=self.destination_file_format,
                     mode=self.mode,
