@@ -7,7 +7,7 @@ import os
 
 
 def get_spark_session_db_client() -> Tuple[SparkSession, WorkspaceClient]:
-    if os.environ.get("DB_INSTANCE_TYPE", None):
+    if os.environ.get("LOGGER_PATH_FROM_ROOT", None):
         builder = SparkSession.builder
     else:
         databricks_connect_config = load_yaml(
