@@ -5,19 +5,19 @@ task: "elife"
 # Database Configuration
 bronze:
   task_name: "slr_to_bronze"
-  catalog_name: "llama2-summarisation-slr"
+  catalog_name: "llama2_summarisation_slr"
   schema_name: "bronze"
   destination_file_format: "DELTA"
   mode: "overwrite"
 silver:
   task_name: "slr_to_bronze"
-  catalog_name: "llama2-summarisation-slr"
+  catalog_name: "llama2_summarisation_slr"
   schema_name: "silver"
   destination_file_format: "DELTA"
   mode: "overwrite"
 gold:
   task_name: "slr_to_gold"
-  catalog_name: "llama2-summarisation-slr"
+  catalog_name: "llama2_summarisation_slr"
   schema_name: "gold"
   destination_file_format: "DELTA"
   mode: "overwrite"

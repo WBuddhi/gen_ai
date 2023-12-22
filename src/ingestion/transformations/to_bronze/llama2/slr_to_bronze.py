@@ -35,8 +35,10 @@ class ToBronze(BaseTransformer):
         )
         dfs = []
         for dataset_name, data in dataset.items():
-            dfs.append({
-                "table_name":dataset_name,
-                "df":pds.DataFrame(data).to_spark()
-            })
+            dfs.append(
+                {
+                    "table_name": dataset_name,
+                    "df": pds.DataFrame(data).to_spark(),
+                }
+            )
         return dfs
