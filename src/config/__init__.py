@@ -2,6 +2,7 @@ from src.config.spark_config import get_spark_session_db_client
 import logging
 import logging.config
 import os
+import sys
 from typing import Dict
 
 import yaml
@@ -10,9 +11,13 @@ from yaml.loader import SafeLoader
 
 spark, db_client = get_spark_session_db_client()
 
-ENV = db_client.dbutils.widgets.get("env_prefix")
-DB_RUN_ID = db_client.dbutils.widgets.get("job_id")
-DB_JOB_ID = db_client.dbutils.widgets.get("run_id")
+env = sys.argv[1]
+job_id = sys.argv[2]
+run_id = sys.argv[3]
+some_input = sys.argv[4]
+ENV = env
+DB_RUN_ID = run_id
+DB_JOB_ID = job_id
 LOG_VARS = {"env": ENV, "db_run_id": DB_RUN_ID, "db_job_id": DB_JOB_ID}
 LOGGER_PATH_FROM_ROOT = "src/config/logging.yaml"
 
@@ -56,3 +61,4 @@ with open(str(os.path.abspath(logger_path))) as file_handler:
     logging.config.dictConfig(logging_config)
 
 logger = get_logger(logger_name)
+logger.info(f"Inputs: {env},{job_id},{run_id},{some_input}")
