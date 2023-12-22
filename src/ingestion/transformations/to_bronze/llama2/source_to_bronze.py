@@ -8,7 +8,7 @@ from src.config import logger, spark, db_client
 
 
 class SourceToBronze(BaseTransformer):
-    def __init__(self, config_path: str, databricks_connect: str):
+    def __init__(self, config_path: str):
         self.config = load_yaml(config_path)
         super().__init__(
             **self.config["bronze"], spark=spark, db_client=db_client
