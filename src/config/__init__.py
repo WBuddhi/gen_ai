@@ -24,7 +24,7 @@ LOGGER_PATH_FROM_ROOT = "src/config/logging.yaml"
 
 
 def get_local_prod_config() -> Dict[str, str]:
-    if os.environ("REPO_ROOT_PATH", None):
+    if os.environ.get("REPO_ROOT_PATH", None):
         logger_path = os.path.join(
             os.environ["REPO_ROOT_PATH"], LOGGER_PATH_FROM_ROOT
         )
