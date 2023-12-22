@@ -1,4 +1,4 @@
-from spark_config import get_spark_session_db_client
+from src.config.spark_config import get_spark_session_db_client
 import logging
 import logging.config
 import os
