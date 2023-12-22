@@ -1,11 +1,11 @@
 from pyspark.sql import SparkSession
 from databricks.sdk import WorkspaceClient
-from typing import Tuple
+from typing import Tuple, Union, Dict
 import os
 
 
-def get_spark_session(
-    name: str, config_path: str = None
+def get_spark_session_db_client(
+    name: str, databricks_connect: Dict[str, str]
 ) -> Tuple[SparkSession, WorkspaceClient]:
     if os.environ.get("DB_INSTANCE_TYPE", None):
         builder = SparkSession.builder.appName(name)
@@ -13,11 +13,8 @@ def get_spark_session(
     else:
         from databricks.connect import DatabricksSession
         from databricks.sdk.core import Config
-        import yaml
 
-        with open(config_path, "r") as yaml_stream:
-            config = yaml.safe_load(yaml_stream)
-        db_config = Config(**config)
+        db_config = Config(**databricks_connect)
         builder = DatabricksSession.builder.sdkConfig(db_config)
-        db_client = WorkspaceClient(db_config)
-    return builder.getOrCreate()
+        db_client = WorkspaceClient(**databricks_connect)
+    return builder.getOrCreate(), db_client

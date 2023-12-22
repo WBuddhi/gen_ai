@@ -2,29 +2,27 @@ from abc import ABCMeta, abstractmethod
 from typing import List, Optional
 
 from pyspark.sql import DataFrame, SparkSession
+from databricks.sdk import WorkspaceClient
 
 from src.config import logger
-from src.spark_config import get_spark_session
-from src.utils.spark_utils import save
+from src.ingestion.spark_config import get_spark_session_db_client
+from src.ingestion.utils.spark_utils import save
 
 
 class BaseTransformer(metaclass=ABCMeta):
     def __init__(
         self,
-        dbutils,
         task_name: str,
-        destination_path: str,
-        dst_database: str,
         overwrite_table=False,
         destination_file_format: str = "DELTA",
         spark: Optional[SparkSession] = None,
+        db_client: Optional[WorkspaceClient] = None,
     ) -> None:
-        self.dbutils = dbutils
-        self.destination_path = destination_path
         self.destination_file_format = destination_file_format
-        self.dst_database = dst_database
         self.task_name = task_name
-        self.spark = get_spark_session(self.task_name) if not spark else spark
+        self.spark, self.db_client = get_spark_session_db_client(
+            self.task_name
+        )
         self.overwrite_table = overwrite_table
         self.cached_tables = []
 
@@ -70,9 +68,10 @@ class BaseTransformer(metaclass=ABCMeta):
             try:
                 save(
                     spark=self.spark,
+                    db_client=self.db_client,
                     df=df["df"],
-                    destination_path=self.destination_path,
-                    database_name=self.dst_database,
+                    catalog_name=self.catalog_name,
+                    schema_name=self.schema_name,
                     table_name=table_name,
                     file_format=self.destination_file_format,
                     overwrite=self.overwrite_table,

@@ -28,16 +28,16 @@ def _create_db(spark: SparkSession, database_name: str, location: str) -> str:
 
 
 def _create_schema(
-    db_workspace: WorkspaceClient, catalog_name: str, schema_name: str
+    db_client: WorkspaceClient, catalog_name: str, schema_name: str
 ):
     schema_full_name = f"{catalog_name}.{schema_name}"
     try:
-        db_workspace.schema.get(schema_full_name)
+        db_client.schema.get(schema_full_name)
         logger.info(f"Schema ({schema_full_name}) already exists")
         return None
     except Exception:
         logger.info(f"Creating Schema: {schema_full_name}")
-        return db_workspace.schema.create(
+        return db_client.schema.create(
             name=schema_name, catalog_name=catalog_name
         )
 
@@ -81,9 +81,9 @@ def _db_exists(spark: SparkSession, database: str) -> None:
     return spark.catalog._jcatalog.databaseExists(database)
 
 
-def table_exists(db_workspace: WorkspaceClient, table_full_name: str):
+def table_exists(db_client: WorkspaceClient, table_full_name: str):
     try:
-        return db_workspace.table.get(table_full_name)
+        return db_client.table.get(table_full_name)
     except Exception:
         return None
 
@@ -129,7 +129,7 @@ def create_merge_condition(match_cols: List):
 
 def save(
     spark: SparkSession,
-    db_workspace: WorkspaceClient,
+    db_client: WorkspaceClient,
     df: DataFrame,
     catalog_name: str,
     schema_name: str,
@@ -145,10 +145,10 @@ def save(
     )
 
     table_full_name = f"{catalog_name}.{schema_name}.{table_name}"
-    _create_schema(db_workspace, catalog_name, schema_name)
+    _create_schema(db_client, catalog_name, schema_name)
     logger.info(f"Preparing to write {table_full_name}")
 
-    if mode == "upsert" and table_exists(db_workspace, table_full_name):
+    if mode == "upsert" and table_exists(db_client, table_full_name):
         when_matched_update_cond = create_when_matched_update_condition(
             df, upsert_config["exclusion_list"]
         )
