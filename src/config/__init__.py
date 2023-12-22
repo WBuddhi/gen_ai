@@ -11,18 +11,18 @@ ENV = os.environ.get("ENV", "dev")
 DB_RUN_ID = os.environ.get("DB_RUN_ID", "dummy_run_id")
 DB_JOB_ID = os.environ.get("DB_JOB_ID", "dummy_job_id")
 LOG_VARS = {"env": ENV, "db_run_id": DB_RUN_ID, "db_job_id": DB_JOB_ID}
+LOGGER_PATH_FROM_ROOT = "src/config/logging.yaml"
 
 
 def get_local_prod_config() -> Dict[str, str]:
-    if "PRICE_ELASTICITY_CONFIG_FILE_PATH" in os.environ:
+    if "REPO_ROOT_PATH" in os.environ:
         logger_path = os.path.join(
-            os.environ["PRICE_ELASTICITY_CONFIG_FILE_PATH"], "logging.yaml"
+            os.environ["REPO_ROOT_PATH"], LOGGER_PATH_FROM_ROOT
         )
         logger_name = "defaultLogger"
     else:
         load_dotenv()
-        #logger_path = "/Workspace/Repos/buddhika.de.seram+databricks@blend360.com/gen_ai/src/config/logging.yaml"
-        logger_path = "./src/config/logging.yaml"
+        logger_path = LOGGER_PATH_FROM_ROOT
         logger_name = "defaultLogger"
     return logger_path, logger_name
 

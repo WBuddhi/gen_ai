@@ -7,7 +7,7 @@ import pyspark.pandas as pds
 from src.config import logger
 
 
-class ToBronze(BaseTransformer):
+class SourceToBronze(BaseTransformer):
     def __init__(self, config_path: str, databricks_connect: str):
         self.config = load_yaml(config_path)
         super().__init__(

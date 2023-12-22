@@ -1,0 +1,2 @@
+spark_env_vars:
+  REPO_ROOT_PATH: "../../src"
