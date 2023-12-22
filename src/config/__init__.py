@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from yaml.loader import SafeLoader
 
 spark, db_client = get_spark_session_db_client()
-db_client.dbutils.c
 
 ENV = db_client.dbutils.widgets.get("env_prefix")
 DB_RUN_ID = db_client.dbutils.widgets.get("job_id")
