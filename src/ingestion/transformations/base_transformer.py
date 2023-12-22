@@ -1,11 +1,12 @@
 from abc import ABCMeta, abstractmethod
-from typing import List, Dict
+from typing import List
 
 from pyspark.sql import DataFrame
 
 from src.config import logger
-from src.ingestion.spark_config import get_spark_session_db_client
 from src.ingestion.utils.spark_utils import save
+from pyspark.sql import SparkSession
+from databricks.connect import DatabricksSession
 
 
 class BaseTransformer(metaclass=ABCMeta):
@@ -15,16 +16,16 @@ class BaseTransformer(metaclass=ABCMeta):
         catalog_name: str,
         schema_name: str,
         mode: str,
-        databricks_connect: Dict[str, str],
+        spark: SparkSession,
+        db_client: DatabricksSession,
         destination_file_format: str = "DELTA",
     ) -> None:
         self.catalog_name = catalog_name
         self.schema_name = schema_name
         self.destination_file_format = destination_file_format
         self.task_name = task_name
-        self.spark, self.db_client = get_spark_session_db_client(
-            self.task_name, databricks_connect
-        )
+        self.spark = spark
+        self.db_client = db_client
         self.mode = mode
         self.cached_tables = []
 

@@ -4,14 +4,14 @@ from src.utils import load_yaml
 from src.ingestion.utils.spark_utils import create_volume
 from src.ingestion.transformations.base_transformer import BaseTransformer
 import pyspark.pandas as pds
-from src.config import logger
+from src.config import logger, spark, db_client
 
 
 class SourceToBronze(BaseTransformer):
     def __init__(self, config_path: str, databricks_connect: str):
         self.config = load_yaml(config_path)
         super().__init__(
-            **self.config["bronze"], databricks_connect=databricks_connect
+            **self.config["bronze"], spark=spark, db_client=db_client
         )
         self.dataset_name = self.config["dataset_name"]
         self.task = self.config["task"]

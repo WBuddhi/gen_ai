@@ -1,3 +1,4 @@
+from spark_config import get_spark_session_db_client
 import logging
 import logging.config
 import os
@@ -7,9 +8,12 @@ import yaml
 from dotenv import load_dotenv
 from yaml.loader import SafeLoader
 
-ENV = os.environ.get("ENV", "dev")
-DB_RUN_ID = os.environ.get("DB_RUN_ID", "dummy_run_id")
-DB_JOB_ID = os.environ.get("DB_JOB_ID", "dummy_job_id")
+spark, db_client = get_spark_session_db_client()
+db_client.dbutils.c
+
+ENV = db_client.dbutils.widgets.get("env_prefix")
+DB_RUN_ID = db_client.dbutils.widgets.get("job_id")
+DB_JOB_ID = db_client.dbutils.widgets.get("run_id")
 LOG_VARS = {"env": ENV, "db_run_id": DB_RUN_ID, "db_job_id": DB_JOB_ID}
 LOGGER_PATH_FROM_ROOT = "src/config/logging.yaml"
 
@@ -22,7 +26,7 @@ def get_local_prod_config() -> Dict[str, str]:
         logger_name = "defaultLogger"
     else:
         load_dotenv()
-        logger_path = LOGGER_PATH_FROM_ROOT
+        logger_path = os.path.join(".", LOGGER_PATH_FROM_ROOT)
         logger_name = "defaultLogger"
     return logger_path, logger_name
 
