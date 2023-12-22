@@ -65,19 +65,20 @@ class BaseTransformer(metaclass=ABCMeta):
             logger.exception("Failed to apply transformation")
             raise error
 
-        for table_name, df in dfs.items():
+        for df in dfs:
             try:
                 save(
                     spark=self.spark,
-                    df=df,
+                    db_client=self.db_client,
+                    df=df["df"],
                     catalog_name=self.catalog_name,
                     schema_name=self.schema_name,
-                    table_name=table_name,
+                    table_name=df["table_name"],
                     file_format=self.destination_file_format,
                     mode=self.mode,
                     partition_by=partition_by,
                     optimize_table=optimize_table,
-                    upsert_config=df.get("upsert_config"),
+                    upsert_config=df.get("upsert_config", None),
                 )
             except Exception as error:
                 logger.exception("Failed to save tables")

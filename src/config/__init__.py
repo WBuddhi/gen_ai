@@ -21,7 +21,7 @@ def get_local_prod_config() -> Dict[str, str]:
         logger_name = "defaultLogger"
     else:
         load_dotenv()
-        logger_path = "./src/config/logging.yaml"
+        logger_path = "/Workspace/Repos/buddhika.de.seram+databricks@blend360.com/gen_ai/src/config/logging.yaml"
         logger_name = "defaultLogger"
     return logger_path, logger_name
 

@@ -16,12 +16,12 @@ def _create_schema(
 ):
     schema_full_name = f"{catalog_name}.{schema_name}"
     try:
-        db_client.schema.get(schema_full_name)
+        db_client.schemas.get(schema_full_name)
         logger.info(f"Schema ({schema_full_name}) already exists")
         return None
     except Exception:
         logger.info(f"Creating Schema: {schema_full_name}")
-        return db_client.schema.create(
+        return db_client.schemas.create(
             name=schema_name, catalog_name=catalog_name
         )
 
