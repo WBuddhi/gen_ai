@@ -62,6 +62,4 @@ if __name__ == "__main__":
         else os.path.join(".", config_relative_path)
     )
     gold_to_fs = GoldToFeatureStore(config_path=config_path)
-    dfs = gold_to_fs.transform()
-    print(dfs[0]["df"].show())
-    # gold_to_fs.run()
+    gold_to_fs.run()
