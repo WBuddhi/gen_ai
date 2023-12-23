@@ -8,7 +8,7 @@ def load_yaml(yaml_path: str):
 
 
 def run_in_databricks():
-    if os.environ.get("REPO_ROOT_PATH", None):
+    if os.environ.get("DB_CLUSTER_NAME", None):
         return True
     return False
 
@@ -16,8 +16,10 @@ def run_in_databricks():
 def get_path_to_src():
     cwd = os.getcwd().split("/")
     path_to_src = []
+    if "src" not in cwd:
+        return "."
     for folder_name in cwd[::-1]:
-        if folder_name == "gen_ai":
-            break
         path_to_src.append("..")
+        if folder_name == "src":
+            break
     return "/".join(path_to_src)
