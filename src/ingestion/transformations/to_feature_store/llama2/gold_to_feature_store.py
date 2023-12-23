@@ -14,7 +14,7 @@ class GoldToFeatureStore(BaseTransformer):
 
     def load_dataset(self):
         logger.info("Loading dataframs from Bronze layer")
-        full_schema_name = f"{self.catalog_name}.gold"
+        full_schema_name = f"{self.config['gold']['catalog_name']}.gold"
         dfs = {}
         for table_name in ("train", "validation", "test"):
             dfs[table_name] = self.spark.table(
