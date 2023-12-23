@@ -126,6 +126,32 @@ def create_volume(
         )
 
 
+def save_to_feature_store(
+    table_name: str,
+    df: DataFrame,
+    mode: str,
+    feature_store_client: FeatureEngineeringClient,
+    primary_keys: List[str],
+    partition_by: List[str] = None,
+):
+    try:
+        feature_store_client.get_table(table_name)
+        logger.info(f"{table_name}: Already exists")
+        feature_store_client.write(
+            name=table_name,
+            df=df,
+            mode=mode,
+        )
+    except Exception:
+        logger.info(f"{table_name}: doesn't exist")
+        feature_store_client.create_table(
+            name=table_name,
+            df=df,
+            primary_keys="id",
+            partition_columns=partition_by,
+        )
+
+
 def save(
     spark: SparkSession,
     db_client: WorkspaceClient,
@@ -135,6 +161,7 @@ def save(
     table_name: str,
     file_format: str,
     mode: str,
+    primary_keys: List[str] = None,
     optimize_table: bool = False,
     partition_by: Union[List[str], str, None] = None,
     upsert_config: dict = None,
@@ -151,10 +178,13 @@ def save(
         create_volume(db_client, catalog_name, schema_name, table_name)
         pass
     elif file_format == "FEATURESTORE":
-        feature_store_client.create_table(
-            name=table_full_name,
+        save_to_feature_store(
+            table_name=table_full_name,
             df=df,
-            primary_keys="id",
+            primary_keys=primary_keys,
+            partition_by=partition_by,
+            mode=mode,
+            feature_store_client=feature_store_client,
         )
     elif mode == "upsert" and table_exists(db_client, table_full_name):
         upsert_to_table(table_full_name, df, upsert_config)

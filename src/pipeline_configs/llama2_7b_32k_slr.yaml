@@ -27,3 +27,6 @@ feature_store:
   schema_name: "pls"
   destination_file_format: "FEATURESTORE"
   mode: "overwrite"
+
+# Modelling
+model: "togethercomputer/LLaMA-2-7B-32K"

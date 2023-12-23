@@ -58,7 +58,6 @@ class BaseTransformer(metaclass=ABCMeta):
 
     def run(
         self,
-        partition_by=None,
         optimize_table: bool = False,
     ) -> None:
         fe_client = (
@@ -83,7 +82,8 @@ class BaseTransformer(metaclass=ABCMeta):
                     table_name=df["table_name"],
                     file_format=self.destination_file_format,
                     mode=self.mode,
-                    partition_by=partition_by,
+                    partition_by=df.get("partition_by", None),
+                    primary_keys=df.get("primary_keys", None),
                     optimize_table=optimize_table,
                     upsert_config=df.get("upsert_config", None),
                     feature_store_client=fe_client,

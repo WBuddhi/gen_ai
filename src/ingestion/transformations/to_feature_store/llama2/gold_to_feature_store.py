@@ -2,7 +2,8 @@ import os
 from src.config import logger, spark, db_client
 from src.ingestion.transformations.base_transformer import BaseTransformer
 from src.utils import load_yaml, run_in_databricks
-from pyspark.sql.functions import monotonically_increasing_id
+from pyspark.sql.functions import monotonically_increasing_id, concat, lit, col
+from transformers import AutoTokenizer
 
 
 class GoldToFeatureStore(BaseTransformer):
@@ -25,11 +26,29 @@ class GoldToFeatureStore(BaseTransformer):
     def transform(self):
         dfs = []
         logger.info("Adding prompt column")
+        tokenizer = AutoTokenizer.from_pretrained(self.config["model"])
+        tokenizer.pad_token = "<PAD>"
+        tokenizer.padding_side = "right"
         for table_name, df in self.load_dataset().items():
+            columns = [col(column_name) for column_name in df.columns]
+            columns.append(monotonically_increasing_id().alias(id))
+            columns.append(
+                concat(
+                    lit("<s>[INS] "),
+                    col("prompt"),
+                    lit(": "),
+                    col("article"),
+                    lit(" [INST]PLS: "),
+                    col("summary"),
+                    lit(tokenizer.eos_token),
+                ).alias("model_input")
+            )
+            df = df.select(*columns)
             df_data = {
                 "table_name": table_name,
-                "df": df.withColumn("id", monotonically_increasing_id()),
+                "df": df,
                 "description": f"{table_name} table for LLama2 Finetuning for PLS task",
+                "primary_keys": "id",
             }
             dfs.append(df_data)
         return dfs
@@ -43,4 +62,6 @@ if __name__ == "__main__":
         else os.path.join(".", config_relative_path)
     )
     gold_to_fs = GoldToFeatureStore(config_path=config_path)
-    gold_to_fs.run()
+    dfs = gold_to_fs.transform()
+    print(dfs[0]["df"].show())
+    # gold_to_fs.run()
