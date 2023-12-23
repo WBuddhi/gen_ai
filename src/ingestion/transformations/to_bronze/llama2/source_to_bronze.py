@@ -1,6 +1,6 @@
 import os
 from datasets import load_dataset
-from src.utils import load_yaml
+from src.utils import load_yaml, get_framework_env
 from src.ingestion.utils.spark_utils import create_volume
 from src.ingestion.transformations.base_transformer import BaseTransformer
 import pyspark.pandas as pds
@@ -42,3 +42,13 @@ class SourceToBronze(BaseTransformer):
                 }
             )
         return dfs
+
+
+if __name__ == "__main__":
+    config_path = (
+        "../../pipeline_configs/llama2_7b_32k_slr.yaml"
+        if get_framework_env() == "databricks"
+        else "./src/pipeline_configs/llama2_7b_32k_slr.yaml"
+    )
+    source_to_bronze = SourceToBronze(config_path=config_path)
+    source_to_bronze.run()
