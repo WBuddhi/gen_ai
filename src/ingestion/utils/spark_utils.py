@@ -153,6 +153,7 @@ def save(
     elif file_format == "FEATURESTORE":
         feature_store_client.create_table(
             name=table_name,
+            df=df,
             primary_keys="id",
             schema=f"{catalog_name}.{schema_name}",
         )
