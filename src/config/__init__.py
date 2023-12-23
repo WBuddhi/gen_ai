@@ -22,7 +22,7 @@ LOG_VARS = {"env": ENV, "db_run_id": DB_RUN_ID, "db_job_id": DB_JOB_ID}
 os.environ["REPO_ROOT_PATH"] = get_path_to_src()
 logger_path, logger_name = get_local_prod_config()
 
-with open(str(os.path.abspath(logger_path))) as file_handler:
+with open(logger_path) as file_handler:
     logging_config = yaml.load(file_handler, Loader=SafeLoader)
     logging.config.dictConfig(logging_config)
 

@@ -17,7 +17,7 @@ def get_path_to_src():
     cwd = os.getcwd().split("/")
     path_to_src = []
     for folder_name in cwd[::-1]:
-        if folder_name == "src":
+        if folder_name == "gen_ai":
             break
         path_to_src.append("..")
     return "/".join(path_to_src)
