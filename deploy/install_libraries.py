@@ -3,9 +3,11 @@ from databricks.sdk.service.compute import (
     PythonPyPiLibrary,
     LibrariesAPI,
 )
-from typing import List, Dict, Union
-from src.utils import load_yaml
-from src.ingestion.spark_config import get_spark_session_db_client
+from typing import List, Dict, Tuple
+from src.utils import load_yaml, run_in_databricks
+from pyspark.sql import SparkSession
+from databricks.sdk import WorkspaceClient
+from databricks.connect import DatabricksSession
 import argparse
 
 
@@ -26,12 +28,25 @@ def update_cluster_packages_from_config(
     requirements_paths: List[str], databricks_connect: Dict[str, str], **kwargs
 ):
     requirements = extract_packages(requirements_paths)
-    _, db_client = get_spark_session_db_client(
-        name="deploy", databricks_connect=databricks_connect
-    )
+    _, db_client = get_spark_session_db_client()
     cluster_id = databricks_connect["cluster_id"]
     library_api = LibrariesAPI(db_client.api_client)
     return library_api.install(cluster_id, requirements)
+
+
+def get_spark_session_db_client() -> Tuple[SparkSession, WorkspaceClient]:
+    if run_in_databricks():
+        builder = SparkSession.builder
+    else:
+        databricks_connect_config = load_yaml(
+            "./deploy/env_configs/local.yaml"
+        )
+        databricks_profile_name = databricks_connect_config[
+            "databricks_connect"
+        ]["profile"]
+        builder = DatabricksSession.builder.profile(databricks_profile_name)
+    db_client = WorkspaceClient()
+    return builder.getOrCreate(), db_client
 
 
 if __name__ == "__main__":

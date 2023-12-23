@@ -7,6 +7,7 @@ from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.catalog import VolumeType
 from pyspark.sql.functions import col, lit
 from pyspark.sql.types import TimestampType
+from databricks.feature_engineering import FeatureEngineeringClient
 
 from src.config import logger
 
@@ -137,6 +138,7 @@ def save(
     optimize_table: bool = False,
     partition_by: Union[List[str], str, None] = None,
     upsert_config: dict = None,
+    feature_store_client: FeatureEngineeringClient = None,
 ) -> None:
     df = df.withColumn(
         "processing_ts", lit(datetime.now()).cast(TimestampType())
@@ -148,6 +150,12 @@ def save(
     if file_format == "VOLUME":
         create_volume(db_client, catalog_name, schema_name, table_name)
         pass
+    elif file_format == "FEATURESTORE":
+        feature_store_client.create_table(
+            name=table_name,
+            primary_keys="id",
+            schema=f"{catalog_name}.{schema_name}",
+        )
     elif mode == "upsert" and table_exists(db_client, table_full_name):
         upsert_to_table(table_full_name, df, upsert_config)
     else:

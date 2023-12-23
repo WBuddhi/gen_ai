@@ -7,6 +7,7 @@ from src.config import logger
 from src.ingestion.utils.spark_utils import save
 from pyspark.sql import SparkSession
 from databricks.connect import DatabricksSession
+from databricks.feature_engineering import FeatureEngineeringClient
 
 
 class BaseTransformer(metaclass=ABCMeta):
@@ -60,6 +61,11 @@ class BaseTransformer(metaclass=ABCMeta):
         partition_by=None,
         optimize_table: bool = False,
     ) -> None:
+        fe_client = (
+            FeatureEngineeringClient()
+            if self.destination_file_format == "FEATURESTORE"
+            else None
+        )
         try:
             dfs = self.transform()
         except Exception as error:
@@ -80,6 +86,7 @@ class BaseTransformer(metaclass=ABCMeta):
                     partition_by=partition_by,
                     optimize_table=optimize_table,
                     upsert_config=df.get("upsert_config", None),
+                    feature_store_client=fe_client,
                 )
             except Exception as error:
                 logger.exception("Failed to save tables")
