@@ -7,8 +7,7 @@ def load_yaml(yaml_path: str):
         return yaml.safe_load(yaml_stream)
 
 
-def get_framework_env():
+def run_in_databricks():
     if os.environ.get("REPO_ROOT_PATH", None):
-        return "databricks"
-    else:
-        return "local"
+        return True
+    return False

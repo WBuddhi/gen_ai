@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 from databricks.sdk import WorkspaceClient
 from databricks.connect import DatabricksSession
-from src.utils import load_yaml, get_framework_env
+from src.utils import load_yaml, run_in_databricks
 from typing import Tuple, Dict
 from dotenv import load_dotenv
 import logging
@@ -12,7 +12,7 @@ LOGGER_PATH_FROM_ROOT = "src/config/logging.yaml"
 
 
 def get_spark_session_db_client() -> Tuple[SparkSession, WorkspaceClient]:
-    if get_framework_env() == "databricks":
+    if run_in_databricks():
         builder = SparkSession.builder
     else:
         databricks_connect_config = load_yaml(
@@ -27,7 +27,7 @@ def get_spark_session_db_client() -> Tuple[SparkSession, WorkspaceClient]:
 
 
 def get_local_prod_config() -> Dict[str, str]:
-    if get_framework_env() == "databricks":
+    if run_in_databricks():
         logger_path = os.path.join(
             os.environ["REPO_ROOT_PATH"], LOGGER_PATH_FROM_ROOT
         )
