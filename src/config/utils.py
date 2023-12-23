@@ -12,6 +12,7 @@ LOGGER_PATH_FROM_ROOT = "src/config/logging.yaml"
 
 
 def get_spark_session_db_client() -> Tuple[SparkSession, WorkspaceClient]:
+    print(run_in_databricks())
     if run_in_databricks():
         builder = SparkSession.builder
     else:
