@@ -8,7 +8,7 @@ def load_yaml(yaml_path: str):
 
 
 def run_in_databricks():
-    if os.environ.get("DB_CLUSTER_NAME", None):
+    if os.environ.get("DATABRICKS_RUNTIME_VERSION", None):
         return True
     return False
 
