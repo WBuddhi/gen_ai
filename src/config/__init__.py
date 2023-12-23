@@ -3,6 +3,7 @@ from src.config.utils import (
     get_local_prod_config,
     get_logger,
 )
+from src.utils import get_path_to_src
 import logging.config
 import os
 import sys
@@ -18,6 +19,7 @@ DB_JOB_ID = sys.argv[3]
 LOG_VARS = {"env": ENV, "db_run_id": DB_RUN_ID, "db_job_id": DB_JOB_ID}
 
 
+os.environ["REPO_ROOT_PATH"] = get_path_to_src()
 logger_path, logger_name = get_local_prod_config()
 
 with open(str(os.path.abspath(logger_path))) as file_handler:

@@ -45,10 +45,11 @@ class SourceToBronze(BaseTransformer):
 
 
 if __name__ == "__main__":
+    config_relative_path = "src/pipeline_configs/llama2_7b_32k_slr.yaml"
     config_path = (
-        "../../pipeline_configs/llama2_7b_32k_slr.yaml"
+        os.path.join(os.environ["REPO_ROOT_PATH"], config_relative_path)
         if run_in_databricks()
-        else "./src/pipeline_configs/llama2_7b_32k_slr.yaml"
+        else os.path.join(".", config_relative_path)
     )
     source_to_bronze = SourceToBronze(config_path=config_path)
     source_to_bronze.run()
