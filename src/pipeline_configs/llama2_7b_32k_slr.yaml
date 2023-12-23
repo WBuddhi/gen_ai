@@ -21,3 +21,12 @@ gold:
   schema_name: "gold"
   destination_file_format: "DELTA"
   mode: "overwrite"
+feature_store:
+  task_name: "pls_to_feature_store"
+  catalog_name: "llama2_feature_store"
+  schema_name: "pls"
+  destination_file_format: "FEATURESTORE"
+  mode: "overwrite"
+
+# Modelling
+model: "togethercomputer/LLaMA-2-7B-32K"

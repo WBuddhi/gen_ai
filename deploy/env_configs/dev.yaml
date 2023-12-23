@@ -1,2 +1,5 @@
-spark_env_vars:
-  REPO_ROOT_PATH: "../../src"
+databricks_connect:
+  profile: "databricks-personal-dev"
+  cluster_id: "1220-131252-6c8tpr9e"
+requirements_paths:
+  - ./requirements.txt
