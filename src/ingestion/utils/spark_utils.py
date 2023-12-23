@@ -152,10 +152,9 @@ def save(
         pass
     elif file_format == "FEATURESTORE":
         feature_store_client.create_table(
-            name=table_name,
+            name=table_full_name,
             df=df,
             primary_keys="id",
-            schema=f"{catalog_name}.{schema_name}",
         )
     elif mode == "upsert" and table_exists(db_client, table_full_name):
         upsert_to_table(table_full_name, df, upsert_config)
