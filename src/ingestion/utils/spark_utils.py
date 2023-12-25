@@ -117,6 +117,7 @@ def upsert_to_table(
 def create_volume(
     db_client, catalog_name, schema_name, table_name, volume_type="MANAGED"
 ):
+    _create_schema(db_client, catalog_name, schema_name)
     try:
         db_client.volumes.read(f"{catalog_name}.{schema_name}.{table_name}")
         logger.info("Volume already exists")

@@ -1,7 +1,7 @@
 import os
 from datasets import load_dataset
 from src.utils import load_yaml, run_in_databricks
-from src.ingestion.utils.spark_utils import create_volume
+from src.ingestion.utils.spark_utils import create_volume, create_schema
 from src.ingestion.transformations.base_transformer import BaseTransformer
 import pyspark.pandas as pds
 from src.config import logger, spark, db_client
@@ -28,10 +28,11 @@ class SourceToBronze(BaseTransformer):
             self.task,
         )
         logger.info(f"Datasets cache dir: {dataset_cache_path}")
+
         create_volume(
             self.db_client,
             self.landing["catalog_name"],
-            self.landing["schema"],
+            self.landing["schema_name"],
             self.task,
         )
         dataset = load_dataset(
