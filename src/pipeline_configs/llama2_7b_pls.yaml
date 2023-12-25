@@ -6,6 +6,12 @@ dataset_name: "pszemraj/scientific_lay_summarisation-elife-norm"
 task: "elife"
 
 ## Unity calalog configuration
+landing:
+  task_name: null
+  catalog_name: "llama2_summarisation_slr"
+  schema_name: "test_landing"
+  destination_file_format: "VOLUME"
+  mode: null
 bronze:
   task_name: "pls_to_bronze"
   catalog_name: "llama2_summarisation_pls"

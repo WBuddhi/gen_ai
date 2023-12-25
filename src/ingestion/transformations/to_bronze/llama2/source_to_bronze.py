@@ -15,6 +15,7 @@ class SourceToBronze(BaseTransformer):
         )
         self.dataset_name = self.config["dataset_name"]
         self.task = self.config["task"]
+        self.landing = self.config["landing"]
 
     def load_dataset(self):
         return load_dataset(self.dataset_name)
@@ -22,8 +23,8 @@ class SourceToBronze(BaseTransformer):
     def transform(self):
         dataset_cache_path = os.path.join(
             "/Volumes",
-            self.catalog_name,
-            "test_landing",
+            self.landing["catalog_name"],
+            self.landing["schema_name"],
             self.task,
         )
         logger.info(f"Datasets cache dir: {dataset_cache_path}")
