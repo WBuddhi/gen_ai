@@ -25,7 +25,9 @@ class GoldToFeatureStore(BaseTransformer):
 
     def transform(self):
         dfs = []
-        tokenizer = LlamaTokenizer.from_pretrained(self.config["model"])
+        tokenizer = LlamaTokenizer.from_pretrained(
+            self.config["model"], legacy=False
+        )
         tokenizer.pad_token = "<PAD>"
         tokenizer.padding_side = "right"
         for table_name, df in self.load_dataset().items():
