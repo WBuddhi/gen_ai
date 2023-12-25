@@ -8,7 +8,7 @@ task: "elife"
 ## Unity calalog configuration
 landing:
   task_name: null
-  catalog_name: "llama2_summarisation_slr"
+  catalog_name: "llama2_summarisation_pls"
   schema_name: "test_landing"
   destination_file_format: "VOLUME"
   mode: null
