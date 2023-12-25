@@ -1,0 +1,37 @@
+# Data
+dataset_name: "pszemraj/scientific_lay_summarisation-elife-norm"
+
+# Database Configuration
+landing:
+  task_name: null
+  catalog_name: "llama2_summarisation_slr"
+  schema_name: "test_landing"
+  destination_file_format: "VOLUME"
+  mode: null
+bronze:
+  task_name: "slr_to_bronze"
+  catalog_name: "llama2_summarisation_slr"
+  schema_name: "bronze"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+silver:
+  task_name: "slr_to_bronze"
+  catalog_name: "llama2_summarisation_slr"
+  schema_name: "silver"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+gold:
+  task_name: "slr_to_gold"
+  catalog_name: "llama2_summarisation_slr"
+  schema_name: "gold"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+feature_store:
+  task_name: "pls_to_feature_store"
+  catalog_name: "llama2_feature_store"
+  schema_name: "pls"
+  destination_file_format: "FEATURESTORE"
+  mode: "overwrite"
+
+# Modelling
+model: "./.model_files/llama-2-7b"

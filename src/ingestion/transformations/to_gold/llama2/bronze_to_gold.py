@@ -36,7 +36,7 @@ class BronzeToGold(BaseTransformer):
 
 
 if __name__ == "__main__":
-    config_relative_path = "src/pipeline_configs/llama2_7b_32k_slr.yaml"
+    config_relative_path = "src/pipeline_configs/llama2_7b_32k_pls.yaml"
     config_path = (
         os.path.join(os.environ["REPO_ROOT_PATH"], config_relative_path)
         if run_in_databricks()
