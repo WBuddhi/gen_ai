@@ -1,8 +1,13 @@
 # Data
-dataset_name: "tomasg25/scientific_lay_summarisation"
-task: "elife"
+dataset_name: "pszemraj/scientific_lay_summarisation-elife-norm"
 
 # Database Configuration
+landing:
+  task_name: null
+  catalog_name: "llama2_summarisation_slr"
+  schema_name: "test_landing"
+  destination_file_format: "VOLUME"
+  mode: null
 bronze:
   task_name: "slr_to_bronze"
   catalog_name: "llama2_summarisation_slr"
@@ -29,4 +34,4 @@ feature_store:
   mode: "overwrite"
 
 # Modelling
-model: "togethercomputer/LLaMA-2-7B-32K"
+model: "./.model_files/llama-2-7b"

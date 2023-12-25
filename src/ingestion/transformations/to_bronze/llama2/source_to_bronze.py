@@ -15,20 +15,25 @@ class SourceToBronze(BaseTransformer):
         )
         self.dataset_name = self.config["dataset_name"]
         self.task = self.config["task"]
+        self.landing = self.config["landing"]
 
     def load_dataset(self):
-        return load_dataset(self.dataset_name, self.task)
+        return load_dataset(self.dataset_name)
 
     def transform(self):
         dataset_cache_path = os.path.join(
             "/Volumes",
-            self.catalog_name,
-            "test_landing",
+            self.landing["catalog_name"],
+            self.landing["schema_name"],
             self.task,
         )
         logger.info(f"Datasets cache dir: {dataset_cache_path}")
+
         create_volume(
-            self.db_client, self.catalog_name, "test_landing", self.task
+            self.db_client,
+            self.landing["catalog_name"],
+            self.landing["schema_name"],
+            self.task,
         )
         dataset = load_dataset(
             self.dataset_name, self.task, cache_dir=dataset_cache_path
@@ -45,7 +50,7 @@ class SourceToBronze(BaseTransformer):
 
 
 if __name__ == "__main__":
-    config_relative_path = "src/pipeline_configs/llama2_7b_32k_slr.yaml"
+    config_relative_path = "src/pipeline_configs/llama2_7b_pls.yaml"
     config_path = (
         os.path.join(os.environ["REPO_ROOT_PATH"], config_relative_path)
         if run_in_databricks()

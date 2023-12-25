@@ -3,7 +3,7 @@ from src.config import logger, spark, db_client
 from src.ingestion.transformations.base_transformer import BaseTransformer
 from src.utils import load_yaml, run_in_databricks
 from pyspark.sql.functions import monotonically_increasing_id, concat, lit, col
-from transformers import AutoTokenizer
+from transformers import LlamaTokenizer
 
 
 class GoldToFeatureStore(BaseTransformer):
@@ -25,7 +25,9 @@ class GoldToFeatureStore(BaseTransformer):
 
     def transform(self):
         dfs = []
-        tokenizer = AutoTokenizer.from_pretrained(self.config["model"])
+        tokenizer = LlamaTokenizer.from_pretrained(
+            self.config["model"], legacy=False
+        )
         tokenizer.pad_token = "<PAD>"
         tokenizer.padding_side = "right"
         for table_name, df in self.load_dataset().items():
@@ -54,7 +56,7 @@ class GoldToFeatureStore(BaseTransformer):
 
 
 if __name__ == "__main__":
-    config_relative_path = "src/pipeline_configs/llama2_7b_32k_slr.yaml"
+    config_relative_path = "src/pipeline_configs/llama2_7b_pls.yaml"
     config_path = (
         os.path.join(os.environ["REPO_ROOT_PATH"], config_relative_path)
         if run_in_databricks()

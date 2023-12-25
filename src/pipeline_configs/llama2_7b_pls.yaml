@@ -1,0 +1,41 @@
+# Experiment
+experiment_name: llama2_7b_pls
+
+# Data
+dataset_name: "pszemraj/scientific_lay_summarisation-elife-norm"
+task: "elife"
+
+## Unity calalog configuration
+landing:
+  task_name: null
+  catalog_name: "llama2_summarisation_pls"
+  schema_name: "test_landing"
+  destination_file_format: "VOLUME"
+  mode: null
+bronze:
+  task_name: "pls_to_bronze"
+  catalog_name: "llama2_summarisation_pls"
+  schema_name: "bronze"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+silver:
+  task_name: "pls_to_bronze"
+  catalog_name: "llama2_summarisation_pls"
+  schema_name: "silver"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+gold:
+  task_name: "pls_to_gold"
+  catalog_name: "llama2_summarisation_pls"
+  schema_name: "gold"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+feature_store:
+  task_name: "pls_to_feature_store"
+  catalog_name: "llama2_feature_store"
+  schema_name: "pls"
+  destination_file_format: "FEATURESTORE"
+  mode: "overwrite"
+
+# Modelling
+model: "/Volumes/llama2_feature_store/models/llama2_7b/"
