@@ -29,7 +29,10 @@ class SourceToBronze(BaseTransformer):
         )
         logger.info(f"Datasets cache dir: {dataset_cache_path}")
         create_volume(
-            self.db_client, self.catalog_name, "test_landing", self.task
+            self.db_client,
+            self.landing["catalog_name"],
+            self.landing["schema"],
+            self.task,
         )
         dataset = load_dataset(
             self.dataset_name, self.task, cache_dir=dataset_cache_path
