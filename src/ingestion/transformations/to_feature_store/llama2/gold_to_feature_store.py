@@ -11,7 +11,6 @@ from pyspark.sql.functions import (
     concat_ws,
 )
 from transformers import LlamaTokenizer
-import spacy
 import re
 from haystack.nodes import PreProcessor
 
