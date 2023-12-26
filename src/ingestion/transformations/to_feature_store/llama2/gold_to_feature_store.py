@@ -83,14 +83,11 @@ class GoldToFeatureStore(BaseTransformer):
                 ["id"]
             )
             logger.info("Creating clean article")
-            df_clean = df.groupBy("doc_id").agg(
-                concat_ws(" ", col("snippet")).alias("article_clean")
+            df_clean = df.groupBy("doc_id").orderBy("split_id").agg(
+                concat_ws(" ", col("article_snippet")).alias("article_clean")
             )
-            df = df.join(df_clean, df["doc_id"] == df_clean["doc_id"], "right")
             logger.info("Adding prompt")
-            columns = [col(column_name) for column_name in df.columns]
-            columns.append(
-                concat(
+            df_clean.withColumn("model_input", concat(
                     lit("<s>[INS] "),
                     col("prompt"),
                     lit("\nARTICLE:\n"),
@@ -98,13 +95,11 @@ class GoldToFeatureStore(BaseTransformer):
                     lit("\nPlain Language Summary:[INST]\n"),
                     col("summary"),
                     lit(tokenizer.eos_token),
-                ).alias("model_input")
-            )
-            df = df.select(*columns)
+                ))
+            df = df.join(df_clean, df["doc_id"] == df_clean["doc_id"], "right")
             df_data = {
                 "table_name": table_name,
                 "df": df,
-                "description": f"{table_name} table for LLama2 Finetuning for PLS task",
                 "primary_keys": "id",
             }
             dfs.append(df_data)
