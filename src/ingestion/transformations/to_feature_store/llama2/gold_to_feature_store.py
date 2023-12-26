@@ -60,7 +60,7 @@ class GoldToFeatureStore(BaseTransformer):
         docs = preprocessor.process(preprocessor_docs)
         split_docs = [
             {
-                "id": f"{doc.meta['id']}_{doc.meta['_split_id']}",
+                "doc_split_id": f"{doc.meta['id']}_{doc.meta['_split_id']}",
                 "article_snippet": doc.content,
                 "doc_id": doc.meta["id"],
                 "snippet_len": len(doc.content.split()),
@@ -68,7 +68,8 @@ class GoldToFeatureStore(BaseTransformer):
             }
             for doc in docs
         ]
-        return self.spark.createDataFrame(split_docs)
+        df = self.spark.createDataFrame(split_docs)
+        return df.distinct(col("id"))
 
     def transform(self):
         dfs = []
@@ -82,6 +83,7 @@ class GoldToFeatureStore(BaseTransformer):
             df = df.join(
                 df_snippets, df["id"] == df_snippets["doc_id"], "right"
             ).drop(["id"])
+            df = df.withColumnRenamed("doc_split_id", "id")
             logger.info("Creating clean article")
             df_clean = (
                 df.groupBy("doc_id")
