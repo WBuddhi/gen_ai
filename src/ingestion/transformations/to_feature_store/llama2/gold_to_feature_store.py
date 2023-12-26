@@ -67,7 +67,7 @@ class GoldToFeatureStore(BaseTransformer):
             for doc in docs
         ]
         df = self.spark.createDataFrame(split_docs)
-        return df.dropDuplicates(["id"])
+        return df.dropDuplicates(["doc_split_id"])
 
     def transform(self):
         dfs = []
