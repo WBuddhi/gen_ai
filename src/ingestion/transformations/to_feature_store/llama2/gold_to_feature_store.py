@@ -13,6 +13,7 @@ from pyspark.sql.functions import (
 from transformers import LlamaTokenizer
 import spacy
 import re
+from haystack.nodes import PreProcessor
 
 
 class GoldToFeatureStore(BaseTransformer):
@@ -35,28 +36,38 @@ class GoldToFeatureStore(BaseTransformer):
 
     def create_feature_columns(self, df: DataFrame) -> DataFrame:
         logger.info("Breaking doc to snippets and clean")
-        rows = df.select("id", "article").collect()
-        data = []
-        for row in rows:
-            article_id = row.id
-            article = row.article
-            snippets = []
-            docs = self.nlp(article)
-            snippets = [
-                re.sub(
+        data = df.select("id", "article").collect()
+        preprocessor_docs = [
+            {
+                "content": re.sub(
                     r'\s([?.!"](?:\s|$))',
                     r"\1",
-                    re.sub(r"\([^)]*\)", "", sent.text.strip()),
-                )
-                for sent in docs
-            ]
-            article_data = [
-                {"doc_id": article_id, "snippet_id": cnt, "snippet": snippet}
-                for cnt, snippet in zip(range(0, len(snippets) + 1), snippets)
-            ]
-            data.extend(article_data)
-        logger.info("Data cleaning complete")
-        return self.spark.createDataFrame(data)
+                    re.sub(r"\([^)]*\)", "", item.article.strip()),
+                ),
+                "meta": {"id": item.id},
+            }
+            for item in data
+        ]
+        preprocessor = PreProcessor(
+            clean_empty_lines=True,
+            clean_whitespace=True,
+            clean_header_footer=False,
+            split_by="sentence",
+            split_length=1,
+            split_respect_sentence_boundary=False,
+        )
+        docs = preprocessor.process(preprocessor_docs)
+        split_docs = [
+            {
+                "id": f"{doc.meta['id']}_{doc.meta['_split_id']}",
+                "article_snippet": doc.content,
+                "doc_id": doc.meta["id"],
+                "snippet_len": len(doc.content.split()),
+                "split_id": doc.meta["_split_id"],
+            }
+            for doc in docs
+        ]
+        return self.spark.createDataFrame(split_docs)
 
     def transform(self):
         dfs = []

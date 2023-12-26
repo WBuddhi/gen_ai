@@ -29,9 +29,11 @@ def update_cluster_packages_from_config(
 ):
     requirements = extract_packages(requirements_paths)
     _, db_client = get_spark_session_db_client()
-    cluster_id = databricks_connect["cluster_id"]
     library_api = LibrariesAPI(db_client.api_client)
-    return library_api.install(cluster_id, requirements)
+    cluster_id = databricks_connect["cluster_id"]
+    for cluster_id in databricks_connect["cluster_id"]:
+        library_api.install(cluster_id, requirements)
+    return True
 
 
 def get_spark_session_db_client() -> Tuple[SparkSession, WorkspaceClient]:
