@@ -79,15 +79,23 @@ class GoldToFeatureStore(BaseTransformer):
             logger.info(f"Processing: {table_name}")
             df = df.withColumn("id", monotonically_increasing_id())
             df_snippets = self.create_feature_columns(df)
-            df = df.join(df_snippets, df["id"] == df["doc_id"], "right").drop(
-                ["id"]
-            )
+            df = df.join(
+                df_snippets, df["id"] == df_snippets["doc_id"], "right"
+            ).drop(["id"])
             logger.info("Creating clean article")
-            df_clean = df.groupBy("doc_id").orderBy("split_id").agg(
-                concat_ws(" ", col("article_snippet")).alias("article_clean")
+            df_clean = (
+                df.groupBy("doc_id")
+                .orderBy("split_id")
+                .agg(
+                    concat_ws(" ", col("article_snippet")).alias(
+                        "article_clean"
+                    )
+                )
             )
             logger.info("Adding prompt")
-            df_clean.withColumn("model_input", concat(
+            df_clean.withColumn(
+                "model_input",
+                concat(
                     lit("<s>[INS] "),
                     col("prompt"),
                     lit("\nARTICLE:\n"),
@@ -95,7 +103,8 @@ class GoldToFeatureStore(BaseTransformer):
                     lit("\nPlain Language Summary:[INST]\n"),
                     col("summary"),
                     lit(tokenizer.eos_token),
-                ))
+                ),
+            )
             df = df.join(df_clean, df["doc_id"] == df_clean["doc_id"], "right")
             df_data = {
                 "table_name": table_name,
