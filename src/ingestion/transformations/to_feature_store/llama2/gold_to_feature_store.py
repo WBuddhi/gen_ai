@@ -82,7 +82,7 @@ class GoldToFeatureStore(BaseTransformer):
             df_snippets = self.create_feature_columns(df)
             df = df.join(
                 df_snippets, df["id"] == df_snippets["doc_id"], "right"
-            ).drop(["id"])
+            ).drop(col("id"))
             df = df.withColumnRenamed("doc_split_id", "id")
             logger.info("Creating clean article")
             df_clean = (
