@@ -21,7 +21,6 @@ class GoldToFeatureStore(BaseTransformer):
         super().__init__(
             **self.config["feature_store"], spark=spark, db_client=db_client
         )
-        self.nlp = spacy.load("en_core_web_trf")
 
     def load_dataset(self):
         logger.info("Loading dataframs from Bronze layer")
