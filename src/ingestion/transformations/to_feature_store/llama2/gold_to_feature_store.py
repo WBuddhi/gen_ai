@@ -34,6 +34,7 @@ class GoldToFeatureStore(BaseTransformer):
         return dfs
 
     def create_feature_columns(self, df: DataFrame) -> DataFrame:
+        logger.info("Breaking doc to snippets and clean")
         rows = df.select("id", "article").collect()
         data = []
         for row in rows:
@@ -54,6 +55,7 @@ class GoldToFeatureStore(BaseTransformer):
                 for cnt, snippet in zip(range(0, len(snippets) + 1), snippets)
             ]
             data.extend(article_data)
+        logger.info("Data cleaning complete")
         return self.spark.createDataFrame(data)
 
     def transform(self):
@@ -62,15 +64,18 @@ class GoldToFeatureStore(BaseTransformer):
             self.config["model"], legacy=False
         )
         for table_name, df in self.load_dataset().items():
+            logger.info(f"Processing: {table_name}")
             df = df.withColumn("id", monotonically_increasing_id())
             df_snippets = self.create_feature_columns(df)
             df = df.join(df_snippets, df["id"] == df["doc_id"], "right").drop(
                 ["id"]
             )
+            logger.info("Creating clean article")
             df_clean = df.groupBy("doc_id").agg(
                 concat_ws(" ", col("snippet")).alias("article_clean")
             )
             df = df.join(df_clean, df["doc_id"] == df_clean["doc_id"], "right")
+            logger.info("Adding prompt")
             columns = [col(column_name) for column_name in df.columns]
             columns.append(
                 concat(
