@@ -55,6 +55,7 @@ class GoldToFeatureStore(BaseTransformer):
             split_by="sentence",
             split_length=1,
             split_respect_sentence_boundary=False,
+            progress_bar=False,
         )
         docs = preprocessor.process(preprocessor_docs)
         split_docs = [
