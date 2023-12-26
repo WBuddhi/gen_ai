@@ -23,7 +23,7 @@ class BronzeToGold(BaseTransformer):
         return dfs
 
     def transform(self):
-        prompt = "Create PLS"
+        prompt = "Create a Plain Language Summary of the following article:"
         dfs = []
         logger.info("Adding prompt column")
         for table_name, df in self.load_dataset().items():
