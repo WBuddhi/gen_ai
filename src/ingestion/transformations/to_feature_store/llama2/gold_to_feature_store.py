@@ -83,29 +83,19 @@ class GoldToFeatureStore(BaseTransformer):
             ).drop(col("id"))
             df = df.withColumnRenamed("doc_split_id", "id")
             logger.info("Creating clean article")
-            df_clean = (
-                df.groupBy("doc_id")
-                .orderBy("split_id")
-                .agg(
-                    concat_ws(" ", col("article_snippet")).alias(
-                        "article_clean"
-                    )
-                )
-            )
             logger.info("Adding prompt")
-            df_clean.withColumn(
+            df.withColumn(
                 "model_input",
                 concat(
                     lit("<s>[INS] "),
                     col("prompt"),
                     lit("\nARTICLE:\n"),
-                    col("article_clean"),
+                    col("article"),
                     lit("\nPlain Language Summary:[INST]\n"),
                     col("summary"),
                     lit(tokenizer.eos_token),
                 ),
             )
-            df = df.join(df_clean, df["doc_id"] == df_clean["doc_id"], "right")
             df_data = {
                 "table_name": table_name,
                 "df": df,
