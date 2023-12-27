@@ -1,7 +1,4 @@
-# Experiment
-experiment_name: llama2_7b_pls
-
-# Data
+# Raw Data
 dataset_name: "pszemraj/scientific_lay_summarisation-elife-norm"
 task: "elife"
 
@@ -38,4 +35,45 @@ feature_store:
   mode: "overwrite"
 
 # Modelling
-model: "/Volumes/llama2_feature_store/models/llama2_7b/"
+#model: "/Volumes/llama2_feature_store/models/llama2_7b/"
+modelling:
+  experiment_name: "llama2_7b_pls"
+  model_name: "llama2_biomedical_pls"
+  model: "togethercomputer/LLaMA-2-7B-32K"
+  use_cache: false
+  pretraining_tp: 1
+  resume_checkpiont: null
+
+  bits_and_bytes_config:
+    load_in_4bit: true
+    bnb_4bit_quant_type: "nf4:"
+    bnb_4bit_compute_dtype: "float16"
+    bnb_4bit_use_double_quant: false
+  lora_config:
+    r: 64
+    lora_alpha: 64
+    lora_dropout: 0.1
+    inference_mode: false
+    bias: "none"
+    task_type: "CAUSAL_LM"
+  training_params:
+    num_train_epochs: 1
+    max_steps: -1
+    bf16: False
+    fp16: True
+    per_device_train_batch_size: 4
+    per_device_eval_batch_size: 4
+    gradient_accumulation_steps: 1
+    max_grad_norm: 0.3
+    optim: "paged_adamw_32bit"
+    learning_rate: 4e-5
+    lr_scheduler_type: "constant"
+    warmup_ratio: 0.03
+    weight_decay: 0.001
+    group_by_length: True
+    gradient_checkpointing: True
+    save_steps: 50
+    logging_steps: 10
+  sft_trainer_config:
+    max_sequence_length: null
+    packing: null
