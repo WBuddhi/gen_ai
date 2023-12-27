@@ -107,7 +107,7 @@ class GoldToFeatureStore(BaseTransformer):
             logger.info(f"Processing: {table_name} df")
             df = df.withColumn("doc_id", monotonically_increasing_id())
             df_snippets = self.create_feature_columns(df)
-            self.cache(df_snippets)
+            self.cache_table(df_snippets)
             df = self.clean_article(df, df_snippets)
             logger.info("Adding prompt")
             df = df.withColumn(
