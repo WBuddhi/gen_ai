@@ -148,7 +148,7 @@ def save_to_feature_store(
         feature_store_client.create_table(
             name=table_name,
             df=df,
-            primary_keys="id",
+            primary_keys=primary_keys,
             partition_columns=partition_by,
         )
 
