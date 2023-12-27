@@ -38,4 +38,4 @@ feature_store:
   mode: "overwrite"
 
 # Modelling
-model: "./.model_files/llama-2-7b"
+model: "./.model_files"
