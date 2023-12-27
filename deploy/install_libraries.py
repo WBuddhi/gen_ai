@@ -1,14 +1,13 @@
-from databricks.sdk.service.compute import (
-    Library,
-    PythonPyPiLibrary,
-    LibrariesAPI,
-)
-from typing import List, Dict, Tuple
-from src.utils import load_yaml, run_in_databricks
-from pyspark.sql import SparkSession
-from databricks.sdk import WorkspaceClient
-from databricks.connect import DatabricksSession
 import argparse
+from typing import Dict, List, Tuple
+
+from databricks.connect import DatabricksSession
+from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.compute import (LibrariesAPI, Library,
+                                            PythonPyPiLibrary)
+from pyspark.sql import SparkSession
+
+from src.utils import load_yaml, run_in_databricks
 
 
 def extract_packages(requirements_paths: List[str]):
