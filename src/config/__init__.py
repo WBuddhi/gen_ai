@@ -14,9 +14,14 @@ from src.utils import get_path_to_src
 
 spark, db_client = get_spark_session_db_client()
 
-ENV = sys.argv[1]
-DB_RUN_ID = sys.argv[2]
-DB_JOB_ID = sys.argv[3]
+if len(sys.argv) > 1:
+    ENV = sys.argv[1]
+    DB_RUN_ID = sys.argv[2]
+    DB_JOB_ID = sys.argv[3]
+else:
+    ENV = "Local"
+    DB_RUN_ID = "local_run"
+    DB_JOB_ID = "local_job"
 LOG_VARS = {"env": ENV, "db_run_id": DB_RUN_ID, "db_job_id": DB_JOB_ID}
 
 

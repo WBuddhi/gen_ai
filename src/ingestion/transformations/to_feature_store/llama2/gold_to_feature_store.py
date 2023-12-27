@@ -79,7 +79,7 @@ class GoldToFeatureStore(BaseTransformer):
     ) -> DataFrame:
         logger.info("Creating clean article")
         df_clean = df_snippets.where(
-           df_snippets["snippet_len"] > sensible_sentence_len_threshold
+            df_snippets["snippet_len"] > sensible_sentence_len_threshold
         )
         window = (
             Window.partitionBy("doc_id")
@@ -94,10 +94,12 @@ class GoldToFeatureStore(BaseTransformer):
             .alias("snippet_array"),
         ).dropDuplicates(["doc_id"])
         df_clean = df_clean.select(
-            "doc_id",
+            col("doc_id").alias("doc_id_clean"),
             concat_ws(" ", col("snippet_array")).alias("article_clean"),
         )
-        return df.join(df_clean, df["doc_id"] == df_clean["doc_id"], "inner")
+        return df.join(
+            df_clean, df["doc_id"] == df_clean["doc_id_clean"], "inner"
+        ).drop(col("doc_id_clean"))
 
     def transform(self):
         dfs = []
