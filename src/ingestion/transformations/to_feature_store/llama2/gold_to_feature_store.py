@@ -51,7 +51,7 @@ class GoldToFeatureStore(BaseTransformer):
                     r"\1",
                     re.sub(r"\([^)]*\)", "", item.article.strip()),
                 ),
-                "meta": {"doc_id": item.id},
+                "meta": {"doc_id": item.doc_id},
             }
             for item in data
         ]
