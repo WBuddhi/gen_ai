@@ -5,8 +5,11 @@ import sys
 import yaml
 from yaml.loader import SafeLoader
 
-from src.config.utils import (get_local_prod_config, get_logger,
-                              get_spark_session_db_client)
+from src.config.utils import (
+    get_local_prod_config,
+    get_logger,
+    get_spark_session_db_client,
+)
 from src.utils import get_path_to_src
 
 spark, db_client = get_spark_session_db_client()

@@ -3,8 +3,14 @@ import re
 
 from haystack.nodes import PreProcessor
 from pyspark.sql import DataFrame, Window
-from pyspark.sql.functions import (col, collect_list, concat, concat_ws, lit,
-                                   monotonically_increasing_id)
+from pyspark.sql.functions import (
+    col,
+    collect_list,
+    concat,
+    concat_ws,
+    lit,
+    monotonically_increasing_id,
+)
 from transformers import LlamaTokenizer
 
 from src.config import db_client, logger, spark
@@ -54,7 +60,7 @@ class GoldToFeatureStore(BaseTransformer):
         docs = self.doc_preprocessor.process(preprocessor_docs)
         split_docs = [
             {
-                "doc_split_id": f"{doc.meta['id']}_{doc.meta['_split_id']}",
+                "doc_split_id": f"{doc.meta['doc_id']}_{doc.meta['_split_id']}",
                 "article_snippet": doc.content,
                 "doc_id": doc.meta["doc_id"],
                 "snippet_len": len(doc.content.split()),
@@ -124,7 +130,7 @@ class GoldToFeatureStore(BaseTransformer):
             df = {
                 "table_name": table_name,
                 "df": df,
-                "primary_keys": "id",
+                "primary_keys": "doc_id",
             }
             dfs.extend([df_snippets, df])
         return dfs
