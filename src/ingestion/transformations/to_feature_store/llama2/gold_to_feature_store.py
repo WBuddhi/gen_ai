@@ -2,13 +2,14 @@ import os
 from src.config import logger, spark, db_client
 from src.ingestion.transformations.base_transformer import BaseTransformer
 from src.utils import load_yaml, run_in_databricks
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, Window
 from pyspark.sql.functions import (
     monotonically_increasing_id,
     concat,
     lit,
     col,
     concat_ws,
+    collect_list,
 )
 from transformers import LlamaTokenizer
 import re
@@ -20,6 +21,15 @@ class GoldToFeatureStore(BaseTransformer):
         self.config = load_yaml(config_path)
         super().__init__(
             **self.config["feature_store"], spark=spark, db_client=db_client
+        )
+        self.doc_preprocessor = PreProcessor(
+            clean_empty_lines=True,
+            clean_whitespace=True,
+            clean_header_footer=False,
+            split_by="sentence",
+            split_length=1,
+            split_respect_sentence_boundary=False,
+            progress_bar=False,
         )
 
     def load_dataset(self):
@@ -33,8 +43,7 @@ class GoldToFeatureStore(BaseTransformer):
         return dfs
 
     def create_feature_columns(self, df: DataFrame) -> DataFrame:
-        logger.info("Breaking doc to snippets and clean")
-        data = df.select("id", "article").collect()
+        data = df.select("doc_id", "article").collect()
         preprocessor_docs = [
             {
                 "content": re.sub(
@@ -42,32 +51,50 @@ class GoldToFeatureStore(BaseTransformer):
                     r"\1",
                     re.sub(r"\([^)]*\)", "", item.article.strip()),
                 ),
-                "meta": {"id": item.id},
+                "meta": {"doc_id": item.id},
             }
             for item in data
         ]
-        preprocessor = PreProcessor(
-            clean_empty_lines=True,
-            clean_whitespace=True,
-            clean_header_footer=False,
-            split_by="sentence",
-            split_length=1,
-            split_respect_sentence_boundary=False,
-            progress_bar=False,
-        )
-        docs = preprocessor.process(preprocessor_docs)
+        docs = self.doc_preprocessor.process(preprocessor_docs)
         split_docs = [
             {
                 "doc_split_id": f"{doc.meta['id']}_{doc.meta['_split_id']}",
                 "article_snippet": doc.content,
-                "doc_id": doc.meta["id"],
+                "doc_id": doc.meta["doc_id"],
                 "snippet_len": len(doc.content.split()),
                 "split_id": doc.meta["_split_id"],
             }
             for doc in docs
         ]
-        df = self.spark.createDataFrame(split_docs)
+        df = spark.createDataFrame(split_docs)
         return df.dropDuplicates(["doc_split_id"])
+
+    def clean_article(
+        df: DataFrame,
+        df_snippets: DataFrame,
+        sensible_sentence_len_threshold: int = 8,
+    ) -> DataFrame:
+        logger.info("Creating clean article")
+        df_clean = df_snippets.filter(
+            col("snippet_len") > sensible_sentence_len_threshold
+        )
+        df_clean = df_clean.select(
+            "doc_id",
+            collect_list(col("article_snippet"))
+            .over(
+                Window.partitionBy("doc_id")
+                .orderBy("split_id")
+                .rowsBetween(
+                    Window.unboundedPreceding, Window.unboundedFollowing
+                )
+            )
+            .alias("snippet_array"),
+        ).dropDuplicates(["doc_id"])
+        df_clean = df_clean.select(
+            "doc_id",
+            concat_ws(" ", col("snippet_array")).alias("article_clean"),
+        )
+        return df.join(df_clean, df["doc_id"] == df_clean["doc_id"], "inner")
 
     def transform(self):
         dfs = []
@@ -75,33 +102,35 @@ class GoldToFeatureStore(BaseTransformer):
             self.config["model"], legacy=False
         )
         for table_name, df in self.load_dataset().items():
-            logger.info(f"Processing: {table_name}")
-            df = df.withColumn("id", monotonically_increasing_id())
+            logger.info(f"Processing: {table_name} df")
+            df = df.withColumn("doc_id", monotonically_increasing_id())
             df_snippets = self.create_feature_columns(df)
-            df = df.join(
-                df_snippets, df["id"] == df_snippets["doc_id"], "right"
-            ).drop(col("id"))
-            df = df.withColumnRenamed("doc_split_id", "id")
-            logger.info("Creating clean article")
+            self.cache(df_snippets)
+            df = self.clean_article(df, df_snippets)
             logger.info("Adding prompt")
-            df.withColumn(
+            df = df.withColumn(
                 "model_input",
                 concat(
                     lit("<s>[INS] "),
                     col("prompt"),
                     lit("\nARTICLE:\n"),
-                    col("article"),
+                    col("article_clean"),
                     lit("\nPlain Language Summary:[INST]\n"),
                     col("summary"),
                     lit(tokenizer.eos_token),
                 ),
             )
-            df_data = {
+            df_snippets = {
+                "table_name": f"{table_name}_snippets",
+                "df": df_snippets,
+                "primary_keys": "doc_split_id",
+            }
+            df = {
                 "table_name": table_name,
                 "df": df,
                 "primary_keys": "id",
             }
-            dfs.append(df_data)
+            dfs.extend([df_snippets, df])
         return dfs
 
 
