@@ -1,8 +1,10 @@
 import os
-from src.config import logger, spark, db_client
+
+from pyspark.sql.functions import lit
+
+from src.config import db_client, logger, spark
 from src.ingestion.transformations.base_transformer import BaseTransformer
 from src.utils import load_yaml, run_in_databricks
-from pyspark.sql.functions import lit
 
 
 class BronzeToGold(BaseTransformer):
@@ -23,7 +25,7 @@ class BronzeToGold(BaseTransformer):
         return dfs
 
     def transform(self):
-        prompt = "Create PLS"
+        prompt = "Create a Plain Language Summary of the following article:"
         dfs = []
         logger.info("Adding prompt column")
         for table_name, df in self.load_dataset().items():

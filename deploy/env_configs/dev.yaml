@@ -1,5 +1,7 @@
 databricks_connect:
   profile: "databricks-personal-dev"
-  cluster_id: "1220-131252-6c8tpr9e"
+  cluster_id: 
+    - "1220-131252-6c8tpr9e"
+    - "1226-080044-jryv6m0"
 requirements_paths:
   - ./requirements.txt

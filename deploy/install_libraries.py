@@ -1,14 +1,16 @@
+import argparse
+from typing import Dict, List, Tuple
+
+from databricks.connect import DatabricksSession
+from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.compute import (
+    LibrariesAPI,
     Library,
     PythonPyPiLibrary,
-    LibrariesAPI,
 )
-from typing import List, Dict, Tuple
-from src.utils import load_yaml, run_in_databricks
 from pyspark.sql import SparkSession
-from databricks.sdk import WorkspaceClient
-from databricks.connect import DatabricksSession
-import argparse
+
+from src.utils import load_yaml, run_in_databricks
 
 
 def extract_packages(requirements_paths: List[str]):
@@ -29,9 +31,11 @@ def update_cluster_packages_from_config(
 ):
     requirements = extract_packages(requirements_paths)
     _, db_client = get_spark_session_db_client()
-    cluster_id = databricks_connect["cluster_id"]
     library_api = LibrariesAPI(db_client.api_client)
-    return library_api.install(cluster_id, requirements)
+    cluster_id = databricks_connect["cluster_id"]
+    for cluster_id in databricks_connect["cluster_id"]:
+        library_api.install(cluster_id, requirements)
+    return True
 
 
 def get_spark_session_db_client() -> Tuple[SparkSession, WorkspaceClient]:

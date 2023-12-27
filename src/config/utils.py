@@ -1,12 +1,13 @@
-from pyspark.sql import SparkSession
-from databricks.sdk import WorkspaceClient
-from databricks.connect import DatabricksSession
-from src.utils import load_yaml, run_in_databricks
-from typing import Tuple, Dict
-from dotenv import load_dotenv
 import logging
 import os
+from typing import Dict, Tuple
 
+from databricks.connect import DatabricksSession
+from databricks.sdk import WorkspaceClient
+from dotenv import load_dotenv
+from pyspark.sql import SparkSession
+
+from src.utils import load_yaml, run_in_databricks
 
 LOGGER_PATH_FROM_ROOT = "src/config/logging.yaml"
 
