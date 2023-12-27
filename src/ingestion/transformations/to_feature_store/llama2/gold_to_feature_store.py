@@ -77,6 +77,8 @@ class GoldToFeatureStore(BaseTransformer):
         sensible_sentence_len_threshold: int = 8,
     ) -> DataFrame:
         logger.info("Creating clean article")
+        logger.info(df.columns)
+        logger.info(df_snippets.columns)
         df_clean = df_snippets.where(
            df_snippets["snippet_len"] > sensible_sentence_len_threshold
         )
@@ -106,6 +108,7 @@ class GoldToFeatureStore(BaseTransformer):
         for table_name, df in self.load_dataset().items():
             logger.info(f"Processing: {table_name} df")
             df = df.withColumn("doc_id", monotonically_increasing_id())
+            df = df.sample(fraction=0.1)
             df_snippets = self.create_feature_columns(df)
             self.cache_table(df_snippets)
             df = self.clean_article(df, df_snippets)
