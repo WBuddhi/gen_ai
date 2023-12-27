@@ -78,8 +78,6 @@ class GoldToFeatureStore(BaseTransformer):
         sensible_sentence_len_threshold: int = 8,
     ) -> DataFrame:
         logger.info("Creating clean article")
-        logger.info(df.columns)
-        logger.info(df_snippets.columns)
         df_clean = df_snippets.where(
            df_snippets["snippet_len"] > sensible_sentence_len_threshold
         )
