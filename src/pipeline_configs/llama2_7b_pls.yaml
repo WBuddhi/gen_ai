@@ -37,7 +37,7 @@ feature_store:
 # Modelling
 #model: "/Volumes/llama2_feature_store/models/llama2_7b/"
 modelling:
-  experiment_name: "llama2_7b_pls"
+  experiment_name: "/llama2_7b_pls"
   model_name: "llama2_biomedical_pls"
   model: "togethercomputer/LLaMA-2-7B-32K"
   use_cache: false
