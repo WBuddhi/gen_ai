@@ -38,11 +38,12 @@ feature_store:
 #model: "/Volumes/llama2_feature_store/models/llama2_7b/"
 modelling:
   experiment_name: "/llama2_7b_pls"
+  base_model: "togethercomputer/LLaMA-2-7B-32K"
   model_name: "llama2_biomedical_pls"
-  model: "togethercomputer/LLaMA-2-7B-32K"
-  use_cache: false
-  pretraining_tp: 1
-  resume_checkpiont: null
+  use_flash_attention_2: true
+  model_config:
+    use_cache: false
+    pretraining_tp: 1
 
   bits_and_bytes_config:
     load_in_4bit: true
@@ -51,7 +52,7 @@ modelling:
     bnb_4bit_use_double_quant: false
   lora_config:
     r: 64
-    lora_alpha: 64
+    lora_alpha: 16
     lora_dropout: 0.1
     inference_mode: false
     bias: "none"
@@ -74,6 +75,9 @@ modelling:
     gradient_checkpointing: True
     save_steps: 50
     logging_steps: 10
+    output_dir: "./.model_files"
+    report_to: "mlflow"
   sft_trainer_config:
+    dataset_text_field: "model_input"
     max_sequence_length: null
     packing: null
