@@ -1,7 +1,6 @@
 databricks_connect:
-  profile: "databricks-personal-dev"
+  profile: "databricks-personal-gpu"
   cluster_id: 
-    - "1220-131252-6c8tpr9e"
-    - "1226-080044-jryv6m0"
+    - "1227-152206-finwkeyz"
 requirements_paths:
-  - ./ingest_requirements.txt
+  - ./model_requirements.txt
