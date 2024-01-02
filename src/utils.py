@@ -9,7 +9,7 @@ def load_yaml(yaml_path: str):
 
 
 def run_in_databricks():
-    if os.environ.get("DATABRICKS_RUNTIME_VERSION", None):
+    if os.environ.get("DB_HOME", None):
         return True
     return False
 
