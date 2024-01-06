@@ -2,7 +2,7 @@ import os
 from typing import Dict, Tuple
 
 import torch
-from datasets import IterableDataset
+from datasets import IterableDataset, Dataset
 from mlflow import (
     autolog,
     create_experiment,
@@ -48,17 +48,16 @@ class PLSTrainer:
         full_schema_name = f"{self.catalog_name}.{self.schema_name}"
         datasets = {}
         for table_name in ("train", "validation", "test"):
-            datasets[table_name] = IterableDataset.from_spark(
-                spark.table(f"{full_schema_name}.{table_name}").select(
+            df = spark.table(f"{full_schema_name}.{table_name}").select(
                     col("model_input")
-                )
-            )
+                ).sample(0.1)
+            datasets[table_name] = Dataset.from_spark(df)
         return datasets
 
     def setup_hf_mlflow(self):
         os.environ["HF_MLFLOW_LOG_ARTIFACTS"] = 1
 
-    def model(self) -> Tuple(LlamaForCausalLM, LlamaTokenizer):
+    def model(self, modules:List[str]) -> Tuple[LlamaForCausalLM, LlamaTokenizer]:
         self.bits_and_bytes_config["bnb_4bit_compute_dtype"] = getattr(
             torch, self.bits_and_bytes_config["bnb_4bit_compute_dtype"]
         )
@@ -68,23 +67,59 @@ class PLSTrainer:
             quantization_config=quant_config,
             device_map={"": 0},
             use_flash_attention_2=self.use_flash_attention_2,
+            cache_dir=self.hf_cache_dir,
+            target_modules=modules,
         )
         model.config.use_cache = self.model_config["use_cache"]
         model.config.pretraining_tp = self.model_config["pretraining_tp"]
 
         tokenizer = LlamaTokenizer.from_pretrained(
-            self.base_model, legacy=False
+            self.base_model, legacy=False, padding_side= self.padding_side, cache_dir=self.hf_cache_dir
         )
         tokenizer.pad_token = tokenizer.eos_token
 
         return model, tokenizer
+    
+    def find_all_linear_names(self, model):
+        cls = bitsandbytes.nn.Linear4bit
+        lora_module_names = set()
+        for name, module in model.named_modules():
+            if isinstance(module, cls):
+                names = name.split('.')
+                lora_module_names.add(names[0] if len(names) == 1 else names[-1])
+
+        if 'lm_head' in lora_module_names:  # needed for 16-bit
+            lora_module_names.remove('lm_head')
+        return list(lora_module_names)
+    
+    def print_trainable_parameters(self, model, use_4bit=False):
+    """
+    Prints the number of trainable parameters in the model.
+    """
+        trainable_params = 0
+        all_param = 0
+        for _, param in model.named_parameters():
+            num_params = param.numel()
+            # if using DS Zero 3 and the weights are initialized empty
+            if num_params == 0 and hasattr(param, "ds_numel"):
+                num_params = param.ds_numel
+
+            all_param += num_params
+            if param.requires_grad:
+                trainable_params += num_params
+        if use_4bit:
+            trainable_params /= 2
+        print(
+            f"all params: {all_param:,d} || trainable params: {trainable_params:,d} || trainable%: {100 * trainable_params / all_param}"
+        )
 
     def trainer(self) -> SFTTrainer:
-        peft_config = LoraConfig(**self.lora_config)
-        training_args = TrainingArguments(**self.training_params)
         model, tokenizer = self.model()
+        modules = self.find_all_linear_names(model)
+        peft_config = LoraConfig(**self.lora_config, target_modules=modules)
+        training_args = TrainingArguments(**self.training_params, )
+        self.print_trainable_parameters(model, use_4bit=True)
         dataset = self.load_dataset()
-
         trainer = SFTTrainer(
             model=model,
             train_dataset=dataset["train"],
