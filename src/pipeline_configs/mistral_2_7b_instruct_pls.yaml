@@ -1,0 +1,101 @@
+# Raw Data
+dataset_name: "pszemraj/scientific_lay_summarisation-elife-norm"
+task: "elife"
+
+## Unity calalog configuration
+landing:
+  task_name: null
+  catalog_name: "llama2_summarisation_pls"
+  schema_name: "test_landing"
+  destination_file_format: "VOLUME"
+  mode: null
+bronze:
+  task_name: "pls_to_bronze"
+  catalog_name: "llama2_summarisation_pls"
+  schema_name: "bronze"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+silver:
+  task_name: "pls_to_bronze"
+  catalog_name: "llama2_summarisation_pls"
+  schema_name: "silver"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+gold:
+  task_name: "pls_to_gold"
+  catalog_name: "llama2_summarisation_pls"
+  schema_name: "gold"
+  destination_file_format: "DELTA"
+  mode: "overwrite"
+feature_store:
+  task_name: "pls_to_feature_store"
+  catalog_name: "llama2_feature_store"
+  schema_name: "pls"
+  destination_file_format: "FEATURESTORE"
+  mode: "overwrite"
+
+modelling:
+  experiment_name: &experiment_name "/mistral_7b_instruct_v1_pls_gpt_summary_bz1"
+  base_model: "mistralai/Mistral-7B-Instruct-v0.2"
+  model_name: &model_name "mistral2_7b_biomedical_pls"
+  hf_cache_dir: "/Volumes/llama2_feature_store/models/mistral_7b_instruct_v1_cache"
+  padding_side: right
+  use_flash_attention_2: false
+  model_config:
+    use_cache: false
+    pretraining_tp: 1
+
+  bits_and_bytes_config:
+    load_in_4bit: true
+    bnb_4bit_quant_type: "nf4"
+    bnb_4bit_compute_dtype: "float16"
+    bnb_4bit_use_double_quant: true
+  lora_config:
+    r: 64
+    lora_alpha: 16
+    lora_dropout: 0.1
+    bias: "none"
+    task_type: "CAUSAL_LM"
+    target_modules:
+      - 'q_proj'
+      - 'o_proj'
+      - 'gate_proj'
+      - 'up_proj'
+      - 'down_proj'
+      - 'k_proj'
+      - 'v_proj'
+  training_params:
+    max_steps: 1
+    fp16: true
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 4
+    max_grad_norm: 0.3
+    optim: "paged_adamw_32bit"
+    learning_rate: 0.00002
+    lr_scheduler_type: "constant"
+    warmup_ratio: 0.03
+    group_by_length: False
+    save_steps: 500
+    logging_steps: 10
+    output_dir: *experiment_name
+    report_to: "mlflow"
+    ddp_find_unused_parameters: false
+  sft_trainer_config:
+    dataset_text_field: "text"
+
+inference:
+  model_save_path: "/Volumes/llama2_feature_store/models/mistral_7b_instruct_v1_pls_gpt_summary_bz1"
+  input_example:
+    temperature:
+      - 0.5
+    max_tokens:
+      - 1000
+  model_package:
+    artifact_path: *model_name
+    pip_requirements:
+      - torch==2.0.1
+      - transformers==4.36.0
+      - accelerate==0.21.0
+      - loralib==0.1.2
+      - bitsandbytes==0.41.3.post2
+      - peft==0.7.1

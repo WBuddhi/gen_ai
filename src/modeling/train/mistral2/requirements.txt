@@ -1,0 +1,10 @@
+git+https://github.com/huggingface/peft.git
+bitsandbytes==0.41.3.post2
+einops==0.6.1
+trl==0.4.7
+torch==2.0.1
+accelerate==0.21.0
+transformers==4.36.0
+datasets==2.16.1
+psutil==5.9.7
+pynvml==11.5.0
