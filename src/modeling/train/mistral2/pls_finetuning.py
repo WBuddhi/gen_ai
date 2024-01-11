@@ -1,3 +1,4 @@
+
 import os
 from typing import Dict, Tuple
 
@@ -23,7 +24,7 @@ from transformers import (
 from trl import SFTTrainer
 
 from src.config import logger, spark
-from src.modelling.model.llm_qlora import LlmQlora
+from src.modeling.model.llm_qlora import LlmQlora
 from src.utils import load_yaml, run_in_databricks
 from huggingface_hub import snapshot_download
 from mlflow.models.signature import ModelSignature
@@ -37,6 +38,7 @@ class PLSTrainer:
         self.__dict__.update(self.config["modelling"])
         self.__dict__.update(self.config["inference"])
         self.experiment_id = self.mlflow_setup()
+        torch.cuda.empty_cache()
         enable_system_metrics_logging()
 
     def mlflow_setup(self):
@@ -50,27 +52,24 @@ class PLSTrainer:
         set_experiment(experiment_id=experiment_id)
 
     def format_prompt(
-        example: Dict[str, str], training: bool = True
+        self, example: Dict[str, str], training: bool = True
     ) -> Dict[str, str]:
+        system_prompt = "You create laymen summaries of highly technical articles created by the biomedical industry"
         instruction = (
             "Create a plain language summary for this scientific article"
-        )
-        system_inst = "You create laymen summaries of highly technical articles created by the biomedical industry"
-        system_prompt = "{system_instruction}".format(
-            system_instruction="{system_inst}"
         )
         instruction_prompt = """[INST]User: {instruction}
         #ARTICLE:
         {article}
         [/INST]""".format(
-            article="{article}", instruction="{instruction}"
+            instruction="{instruction}", article="{article}"
         )
         article = example.get("gpt_summary")
         response = example.get("summary") if training else ""
         full_prompt = "\n".join(
             [
-                system_prompt.format(system_prompt=system_prompt),
-                instruction_prompt.format(article=article),
+                system_prompt,
+                instruction_prompt.format(article=article, instruction=instruction),
                 response,
             ]
         )
@@ -84,7 +83,7 @@ class PLSTrainer:
             table_name = f"{training_task}_gpt_summary"
             try:
                 df = spark.table(f"{full_schema_name}.{table_name}").select(
-                    "gpt_summary"
+                    "gpt_summary", "summary"
                 )
                 datasets[training_task] = Dataset.from_spark(df)
             except Exception as _:
@@ -117,16 +116,16 @@ class PLSTrainer:
         return model, tokenizer
 
     def trainer(self) -> SFTTrainer:
+        self.dataset = self.load_dataset()
+        train_dataset = self.dataset["train"].map(self.format_prompt)
         model, tokenizer = self.model()
         peft_config = LoraConfig(**self.lora_config)
         training_args = TrainingArguments(
             **self.training_params,
         )
-        self.dataset = self.load_dataset()
-        dataset = self.dataset.map(self.format_prompt)
         trainer = SFTTrainer(
             model=model,
-            train_dataset=dataset["train"],
+            train_dataset=train_dataset,
             peft_config=peft_config,
             args=training_args,
             tokenizer=tokenizer,
@@ -161,7 +160,7 @@ class PLSTrainer:
                 inputs=input_schema, outputs=output_schema
             )
 
-            prompt = self.format_prompt(self.dataset[0], training=False)
+            prompt = self.format_prompt(self.dataset["train"][0], training=False)
             temperature = self.input_example["temperature"]
             max_tokens = self.input_example["max_tokens"]
             input_example = pd.DataFrame(
@@ -185,7 +184,7 @@ class PLSTrainer:
 
 
 if __name__ == "__main__":
-    config_relative_path = "src/pipeline_configs/llama2_7b_pls.yaml"
+    config_relative_path = "src/pipeline_configs/mistral_2_7b_instruct_pls.yaml"
     config_path = (
         os.path.join(os.environ["REPO_ROOT_PATH"], config_relative_path)
         if run_in_databricks()
