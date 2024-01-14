@@ -23,7 +23,9 @@ dbutils.library.restartPython()
 
 # COMMAND ----------
 
-from mlflow import create_experiment, set_experiment, get_experiment_by_name, MlflowException
+from mlflow import (MlflowException, create_experiment, get_experiment_by_name,
+                    set_experiment)
+
 experiment_name = "/mistral_7b_instruct_v1_pls_gpt_summary_bz1_test"
 try:
     experiment_id = create_experiment(experiment_name)
@@ -54,6 +56,7 @@ login(token="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", add_to_git_credential=True)
 # COMMAND ----------
 
 from datasets import Dataset
+
 df = spark.table("llama2_feature_store.pls.gpt_summary")
 dataset = Dataset.from_spark(df)
 
@@ -86,7 +89,8 @@ print(dataset["text"][0])
 # COMMAND ----------
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import (AutoModelForCausalLM, AutoTokenizer,
+                          BitsAndBytesConfig)
 
 model = "mistralai/Mistral-7B-Instruct-v0.2"
 
@@ -151,8 +155,8 @@ peft_config = LoraConfig(
 
 # COMMAND ----------
 
-from transformers import TrainingArguments
 from mlflow import enable_system_metrics_logging
+from transformers import TrainingArguments
 
 enable_system_metrics_logging()
 
@@ -266,9 +270,10 @@ def generate_prompt(examples):
 # COMMAND ----------
 
 import mlflow
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import PeftModel, PeftConfig
 import torch
+from peft import PeftConfig, PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 
 class LLAMAQLORA(mlflow.pyfunc.PythonModel):
   def load_context(self, context):
@@ -306,14 +311,13 @@ class LLAMAQLORA(mlflow.pyfunc.PythonModel):
 
 # COMMAND ----------
 
-from mlflow.models.signature import ModelSignature
-from mlflow.types import DataType, Schema, ColSpec
-import pandas as pd
 import mlflow
-from huggingface_hub import snapshot_download
-
+import pandas as pd
 import torch
-from peft import PeftModel, PeftConfig
+from huggingface_hub import snapshot_download
+from mlflow.models.signature import ModelSignature
+from mlflow.types import ColSpec, DataType, Schema
+from peft import PeftConfig, PeftModel
 
 with mlflow.start_run():
     trainer.train()
