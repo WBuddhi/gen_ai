@@ -99,3 +99,7 @@ inference:
       - loralib==0.1.2
       - bitsandbytes==0.41.3.post2
       - peft==0.7.1
+
+prompt:
+  system_prompt: "You create laymen summaries of highly technical articles created by the biomedical industry. Your summary should cover most the following topics: Introduction or problem statement, experimental methods, results of experiments, discussions, recommended future work. The summary should have a max length of 600 tokens and should only use the information provided and no prior knowledge. Your output should be a summary with NO headers and NO bullet points, just a long text"
+  instruction: "Create a plain language summary for this scientific article provided"
