@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 import torch
 import pandas as pd
@@ -8,6 +8,7 @@ from mlflow import (
     MlflowException,
     create_experiment,
     enable_system_metrics_logging,
+    log_table,
     get_experiment_by_name,
     set_experiment,
     start_run,
@@ -61,7 +62,7 @@ class PLSTrainer:
 
     def _model_input_example(self):
         input_example = pd.DataFrame(
-            {"article": self.dataset["train"][0]["gpt_summary"]}
+            {"article": [self.dataset["train"]["gpt_summary"][0]]}
         )
         input_example["system_prompts"] = self.system_prompt
         input_example["instructions"] = self.instruction
@@ -73,13 +74,11 @@ class PLSTrainer:
         input_example["batch_size"] = 10
         return input_example
 
-    def _load_inference_model(self, run_id):
-        logged_model = f"runs:/{run_id}/model"
-        return pyfunc.load_model(logged_model)
-
-    def _test_inference_model(self, logged_model: pyfunc.PythonModel):
-        articles = [entry["gpt_summary"] for entry in self.dataset["test"]]
-        return predict(articles=articles, params={"batch_size": 10})
+    def _test_inference_model(self, run_id:str):
+        articles = [self.dataset["test"]["gpt_summary"][0]]
+        logged_model = f"runs:/{run_id}/{self.model_package['artifact_path']}"
+        loaded_model = pyfunc.load_model(logged_model)
+        return articles, predict(loaded_model=loaded_model, articles=articles, params={"batch_size": 5})
 
     def mlflow_setup(self):
         try:
@@ -163,28 +162,31 @@ class PLSTrainer:
         )
         return trainer
 
-    def test_saved_model(self, run_id:str) -> List[str]:
-        logged_model = self._load_inference_model(run_id)
-        return self._test_inference_model(logged_model)
+    def test_saved_model(self, run_id:str, output_file_path:str) -> List[str]:
+        logger.info("Testing packaged model")
+        torch.cuda.empty_cache()
+        articles, predictions = self._test_inference_model(run_id)
+        df = pd.DataFrame({"articles":articles, "predicted_summary": predictions})
+        logger.info(f"Writing outputs to {output_file_path}")
+        log_table(data=df, artifact_file=output_file_path)
 
     def run(self):
         with start_run() as run:
             trainer = self.trainer()
             trainer.train()
+            logger.info("Training completed")
 
             run_id = run.info.run_id
             model_save_path = os.path.join(self.model_save_path, run_id)
-            snapshot_location = os.path.join(
-                self.model_save_path, "base_model_snapshot"
-            )
-            trainer.save_model(model_save_path)
 
+            output_file_path = "output_file/output.json"
+            trainer.save_model(model_save_path)
+            logger.info(f"Saving model to: {model_save_path}")
             peft_model_id = model_save_path
             config = PeftConfig.from_pretrained(peft_model_id)
 
             snapshot_location = snapshot_download(
                 repo_id=config.base_model_name_or_path,
-                local_dir=snapshot_location,
             )
 
             signature = ModelSignature(
@@ -193,9 +195,10 @@ class PLSTrainer:
             )
             input_example = self._model_input_example()
 
+            logger.info("Creating MLFlow model")
             pyfunc.log_model(
                 **self.model_package,
-                python_model=LlmQlora,
+                python_model=LlmQlora(),
                 artifacts={
                     "repository": snapshot_location,
                     "lora": peft_model_id,
@@ -203,7 +206,7 @@ class PLSTrainer:
                 input_example=input_example,
                 signature=signature,
             )
-            return self.test_saved_model(run_id)
+            return self.test_saved_model(run_id, output_file_path)
 
 
 

@@ -102,7 +102,7 @@ class LlmQlora(mlflow.pyfunc.PythonModel):
         return outputs
 
 
-def predict(articles, params=None):
+def predict(loaded_model, articles, params=None):
     system_prompt = (
         "You create laymen summaries of highly technical articles"
         " created by the biomedical industry. Your summary should"
