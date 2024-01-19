@@ -14,7 +14,7 @@ from src.utils import get_path_to_src
 
 spark, db_client = get_spark_session_db_client()
 
-if len(sys.argv) > 1:
+if len(sys.argv) >= 4:
     ENV = sys.argv[1]
     DB_RUN_ID = sys.argv[2]
     DB_JOB_ID = sys.argv[3]

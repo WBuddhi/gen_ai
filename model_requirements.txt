@@ -1,0 +1,7 @@
+transformers==4.35.2
+datasets==2.15.0
+PyYAML==6.0.1
+databricks-sdk==0.16.0
+python-dotenv==1.0.0
+sentencepiece==0.1.99
+typing-extensions==4.5
