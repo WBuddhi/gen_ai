@@ -2,6 +2,7 @@ import os
 from typing import Dict, Tuple, List
 
 import torch
+from pyspark.ml.torch.distributor import TorchDistributor
 import pandas as pd
 from datasets import Dataset
 from mlflow import (
@@ -41,6 +42,7 @@ class PLSTrainer:
         self.experiment_id = self.mlflow_setup()
         torch.cuda.empty_cache()
         enable_system_metrics_logging()
+        self.num_processess = torch.cuda.device_count()
 
     def _model_input_schema(self):
         return Schema(
@@ -173,7 +175,8 @@ class PLSTrainer:
     def run(self):
         with start_run() as run:
             trainer = self.trainer()
-            trainer.train()
+            distributor = TorchDistributor(num_processess=self.num_processess, local_mode=True, use_gpu=True)
+            trainer = distributor.run(trainer)
             logger.info("Training completed")
 
             run_id = run.info.run_id
